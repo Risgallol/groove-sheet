@@ -573,6 +573,13 @@ function mk(meter, subs, rows) {
   return m;
 }
 const EXAMPLES = [
+  // the first example is what a first visit opens with
+  {title:'Amen break', tempo:136, measures:[
+    mk('4/4', '16', {rd:'x-x- x-x- x-x- x-x-', sn:'---- x--g -g-- x--g', bd:'x-x- ---- --xx ----'}),
+    mk('4/4', '16', {rd:'x-x- x-x- x-x- x-x-', sn:'---- x--g -g-- x--g', bd:'x-x- ---- --xx ----'}),
+    mk('4/4', '16', {rd:'x-x- x-x- x-x- x-x-', sn:'---- x--g -g-- --x-', bd:'x-x- ---- --x- ----'}),
+    mk('4/4', '16', {cr:'---- ---- --x- ----', rd:'x-x- x-x- x--- x-x-', sn:'-g-- x--g -g-- --x-', bd:'--xx ---- --x- ----'}),
+  ]},
   {title:'Verse, fill and chorus', tempo:90, measures:[
     Object.assign(mk('4/4', '16', {cr:'x--- ---- ---- ----', hh:'--x- x-x- x-x- x-x-', sn:'---- x--- ---- x---', bd:'x--- ---- x-x- ----'}), {label:'Verse', rs:true}),
     Object.assign(mk('4/4', '16', {hh:'x-x- x-x- x-x- x-x-', sn:'---- x--- ---- x---', bd:'x--- ---- x-x- ---x'}), {re:3}),
@@ -1193,6 +1200,7 @@ function metal(t, v, dec, dest = master, bf = 10000, r = 1) {
 /* ---------- kit: per-drum pitch, length and volume ---------- */
 // pitch in semitones (−12…+12), decay as a length multiplier (0.25…3), vol as a level multiplier (0…1.5)
 const KITS = {
+  studio: {label: 'Recorded jazz kit', sampled: true, p: {}},
   acoustic: {label: 'Acoustic', p: {}},
   e808: {label: 'Electronic 808', p: {
     bd: {pitch: -4, decay: 2.6, vol: 1.1}, sn: {pitch: 3, decay: 0.8}, hh: {pitch: 2, decay: 0.7, vol: 0.9}, hf: {pitch: 2, decay: 0.7},
@@ -1206,9 +1214,10 @@ const KITS = {
   rock: {label: 'Big rock', p: {
     bd: {pitch: -2, decay: 1.3, vol: 1.15}, sn: {pitch: -1, decay: 1.5, vol: 1.1}, t1: {pitch: -2, decay: 1.5}, t2: {pitch: -2, decay: 1.5},
     ft: {pitch: -3, decay: 1.6}, cr: {pitch: -1, decay: 1.6, vol: 1.1}, rd: {decay: 1.2}}},
-  studio: {label: 'Recorded jazz kit', sampled: true, p: {}},
 };
 const KDEF = {pitch: 0, decay: 1, vol: 1};
+// a first visit starts on the recorded kit; its samples only load over http(s), so a page opened from disk starts on the synth
+const DEFKIT = /^https?:$/.test(location.protocol) ? 'studio' : 'acoustic';
 const clampN = (v, lo, hi, d) => { v = +v; return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
 const presetParams = name => Object.fromEntries(INSTR.map(i => [i.id, Object.assign({}, KDEF, (KITS[name] || KITS.acoustic).p[i.id])]));
 function loadKit() {
@@ -1218,7 +1227,7 @@ function loadKit() {
     const s = (k.p && k.p[i.id]) || base[i.id];
     p[i.id] = {pitch: Math.round(clampN(s.pitch, -12, 12, 0)), decay: clampN(s.decay, 0.25, 3, 1), vol: clampN(s.vol, 0, 1.5, 1)};
   }
-  return {preset: KITS[k.preset] || k.preset === 'custom' ? k.preset : 'acoustic', base: KITS[k.base] ? k.base : 'acoustic',
+  return {preset: KITS[k.preset] || k.preset === 'custom' ? k.preset : DEFKIT, base: KITS[k.base] ? k.base : 'acoustic',
     p, master: clampN(k.master, 0, 1.5, 1), click: clampN(k.click, 0, 1.5, 1)};
 }
 let kit = loadKit();
@@ -1229,7 +1238,7 @@ function choke(t) {
   if (!openHH) return;
   openHH.gain.setValueAtTime(1, t); openHH.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); openHH = null;
 }
-/* recorded kit: one-shot samples (Virtuosity Drums, CC0), fetched the first time the kit is used */
+/* recorded kit: one-shot samples (Virtuosity Drums, CC0), fetched when the page opens if this kit is selected */
 const SDIR = 'samples/virtuosity/', SGAIN = 2;
 // drum -> state -> [file, level trim]; shift retunes a sample, in semitones (the kit has no mid tom)
 const SMAP = {
@@ -1247,12 +1256,15 @@ const SNAMES = [...new Set(Object.values(SMAP).flatMap(m => Object.values(m).fil
 const smp = {buf: {}, ready: false, failed: false, p: null};
 const sampledKit = () => !!(KITS[kit.preset === 'custom' ? kit.base : kit.preset] || {}).sampled;
 function loadSamples() {
-  if (!smp.p) smp.p = Promise.all(SNAMES.map(n => fetch(SDIR + n + '.flac')
+  if (!smp.p) smp.p = Promise.resolve().then(() => {
+    // an offline context can decode before any click; the playback context has to wait for one
+    const dc = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 1, 48000);
+    return Promise.all(SNAMES.map(n => fetch(SDIR + n + '.flac')
       .then(r => { if (!r.ok) throw new Error(n); return r.arrayBuffer(); })
-      .then(b => new Promise((res, rej) => AC.decodeAudioData(b, res, rej)))
-      .then(b => { smp.buf[n] = b; })))
-    .then(() => { smp.ready = true; },
-      () => { smp.failed = true; smp.p = null; toast("The recorded kit couldn't be loaded, so the built-in sounds are playing instead."); });
+      .then(b => new Promise((res, rej) => dc.decodeAudioData(b, res, rej)))
+      .then(b => { smp.buf[n] = b; })));
+  }).then(() => { smp.ready = true; },
+    () => { smp.failed = true; smp.p = null; toast("The recorded kit couldn't be loaded, so the built-in sounds are playing instead."); });
   return smp.p;
 }
 // run fn once the recorded kit, if it is the one selected, has loaded; straight away otherwise
@@ -1852,6 +1864,7 @@ S = draft ? sanitize(draft) : sanitize(clone(EXAMPLES[0]));
 setPlayIcon();
 fullRender();
 openFromHash(!!draft);
+if (sampledKit()) loadSamples();
 })();
 </script>
 </body>
