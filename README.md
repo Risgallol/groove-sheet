@@ -6,7 +6,7 @@ Live copy: https://claude.ai/artifact/MW7MKCXEgunJRQLqKwbCXD (private to the own
 
 ## Running it
 
-Open `index.html` in a browser. There is no build step and no server. It needs an internet connection for the web fonts and, the first time you export, for the PDF libraries.
+Open `index.html` in a browser. There is no build step and no server. The one exception is the recorded drum kit: browsers only load its sample files over http, so to hear it run `python3 -m http.server` in this folder and open http://localhost:8000. It needs an internet connection for the web fonts and, the first time you export, for the PDF libraries.
 
 ## Features
 
@@ -16,7 +16,7 @@ Open `index.html` in a browser. There is no build step and no server. It needs a
 - **Song structure:** section labels, repeat signs with a pass count (×2–×16), one-bar "%" repeats, and manual line breaks.
 - **Editing:** select bars (click a bar title, Shift-click for a range) to copy, cut, paste, duplicate, clear, delete, or wrap them in repeats. Undo and redo work for every edit.
 - **Playback:** synthesized kit, tempo 30–260 with tap tempo, metronome, count-in and loop. Repeats play out in full. Start from any point by clicking the score or a count, or by using the Start menu.
-- **Kit:** the Kit button opens per-drum pitch (±12 semitones), length and volume sliders, with a play button for each drum. It has five presets (Acoustic, Electronic 808, Jazz, Tight funk, Big rock), master and metronome volume, and a demo beat. The kit is saved in the browser and used for every groove.
+- **Kit:** the Kit button opens per-drum pitch (±12 semitones), length and volume sliders, with a play button for each drum. It has five synthesized presets (Acoustic, Electronic 808, Jazz, Tight funk, Big rock) and one recorded kit, plus master and metronome volume and a demo beat. The recorded kit plays the samples in `samples/virtuosity/` (from Virtuosity Drums, CC0; see `SOURCE.md` there) and falls back to the synthesized sounds if they can't be loaded. The kit is saved in the browser and used for every groove.
 - **Saving and sharing:** a library of saved grooves (kept in the browser), share codes (`GS2.`), share links, and PDF export (A4, vector).
 
 ## Keyboard
@@ -35,7 +35,7 @@ The current draft, the library, the bar clipboard and view settings are stored i
 
 ## Hosting it as a website
 
-The site is the single file `index.html`. Any static host works (GitHub Pages, Netlify, Cloudflare Pages); there is nothing to build. Upload `index.html` on its own, without the `original/` folder.
+The site is `index.html` plus the `samples/virtuosity/` folder. Any static host works (Vercel, GitHub Pages, Netlify, Cloudflare Pages); there is nothing to build. The `original/` folder is not part of the site.
 
 When the page is served over http(s), the Share dialog also offers **Copy link**. The link is the page's address followed by `#` and the share code, so the groove travels inside the link and nothing is stored on a server. Opening such a link replaces the visitor's current draft; Undo brings it back.
 
@@ -50,7 +50,7 @@ Everything is in `index.html`: the styles at the top, then the markup, then one 
 3. **Examples**, then **history** (undo/redo).
 4. **Score rendering:** `buildScore()` lays out systems; `renderScore()` draws them on screen.
 5. **Grid:** `buildGrid()` and its event handlers, bar selection, copy/paste, and the step context menu.
-6. **Audio:** Web Audio drum synthesis, then the transport (scheduler, playhead, start marker).
+6. **Audio:** Web Audio drum synthesis and the sampled kit (`SMAP`, `loadSamples`, `sampleHit`), then the transport (scheduler, playhead, start marker).
 7. **Controls**, **library**, **share codes and links** (`encode` / `decode` / `sanitize`, `openFromHash`), and **PDF export** (jsPDF + svg2pdf, loaded when first used).
 
 ## Updating the claude.ai copy

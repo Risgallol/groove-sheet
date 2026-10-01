@@ -1,2 +1,4 @@
 .DS_Store
 .vercel
+# sample packs that are not cleared for publishing
+samples/liquid_vinyl_drums*

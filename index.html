@@ -11,7 +11,7 @@
 <meta property="og:description" content="Write a drum groove on the grid, read it as notation, play it back. Share it as a link or export a PDF.">
 <meta name="theme-color" content="#E8EAED" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#0F1114" media="(prefers-color-scheme:dark)">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='1' y='1' width='32' height='32' rx='8' fill='%2316191E'/%3E%3Cg stroke='%23fff' opacity='.55'%3E%3Cpath d='M6 10h22M6 14h22M6 18h22M6 22h22M6 26h22'/%3E%3C/g%3E%3Cpath d='M10 6.5l4 4M14 6.5l-4 4' stroke='%23E2A445' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M14.2 8.5V20M22.8 8.5v11' stroke='%23fff' stroke-width='1.4'/%3E%3Cellipse cx='20' cy='20' rx='3' ry='2.2' transform='rotate(-20 20 20)' fill='%23fff'/%3E%3Crect x='14' y='7.6' width='9.4' height='2.4' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='1' y='1' width='32' height='32' rx='8' fill='%2316191E'/%3E%3Cg stroke='%23fff' opacity='.55'%3E%3Cpath d='M6 10h22M6 14h22M6 18h22M6 22h22M6 26h22'/%3E%3C/g%3E%3Cpath d='M10 18l4 4M14 18l-4 4' stroke='%23E2A445' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M14.2 8.5V18.5M22.8 8.5v11' stroke='%23fff' stroke-width='1.4'/%3E%3Cellipse cx='20' cy='20' rx='3' ry='2.2' transform='rotate(-20 20 20)' fill='%23fff'/%3E%3Crect x='14' y='7.6' width='9.4' height='2.4' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,600&family=Barlow+Condensed:wght@500;600;700&display=swap">
@@ -61,7 +61,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .brand h1{margin:0;font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:.07em;text-transform:uppercase;line-height:1}
 .brand p{margin:2px 0 0;color:var(--ink-2);font-size:13.5px}
 .mark{width:34px;height:34px;flex:none}
-.keys{color:var(--ink-3);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap}
+.keys{color:var(--ink-3);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;flex-basis:100%}
+a.btn{text-decoration:none;color:var(--ink)}
+.top>a.btn{align-self:center}
 kbd{font-family:var(--body);font-size:11.5px;font-weight:600;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--ink-2);background:var(--surface)}
 
 /* toolbar */
@@ -258,8 +260,8 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
       <svg class="mark" viewBox="0 0 34 34" aria-hidden="true">
         <rect x="1" y="1" width="32" height="32" rx="8" fill="var(--ink)"/>
         <g stroke="var(--paper)" stroke-width="1" opacity=".55"><line x1="6" x2="28" y1="10" y2="10"/><line x1="6" x2="28" y1="14" y2="14"/><line x1="6" x2="28" y1="18" y2="18"/><line x1="6" x2="28" y1="22" y2="22"/><line x1="6" x2="28" y1="26" y2="26"/></g>
-        <path d="M10 6.5l4 4M14 6.5l-4 4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
-        <line x1="14.2" y1="8.5" x2="14.2" y2="20" stroke="var(--paper)" stroke-width="1.4"/>
+        <path d="M10 18l4 4M14 18l-4 4" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+        <line x1="14.2" y1="8.5" x2="14.2" y2="18.5" stroke="var(--paper)" stroke-width="1.4"/>
         <ellipse cx="20" cy="20" rx="3" ry="2.2" transform="rotate(-20 20 20)" fill="var(--paper)"/>
         <line x1="22.8" y1="8.5" x2="22.8" y2="19.5" stroke="var(--paper)" stroke-width="1.4"/>
         <rect x="14" y="7.6" width="9.4" height="2.4" fill="var(--paper)"/>
@@ -269,6 +271,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
         <p>Write a drum groove on the grid, read it as notation, play it back.</p>
       </div>
     </div>
+    <a class="btn" href="https://buymeacoffee.com/auguri" target="_blank" rel="noopener" title="Support Groove Sheet"><svg class="i" viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
     <div class="keys"><span><kbd>Space</kbd> play / stop</span><span><kbd>⌘/Ctrl</kbd> <kbd>Z</kbd> undo</span><span><kbd>⇧</kbd> <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd> redo</span><span><kbd>⌘/Ctrl</kbd> <kbd>C</kbd> <kbd>V</kbd> copy / paste bars</span><span><kbd>Home</kbd> start from the top</span></div>
   </header>
 
@@ -386,7 +389,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
       <label class="kctl"><span>Master volume <output id="kMasterOut"></output></span><input type="range" id="kMaster" min="0" max="150" step="5"></label>
       <label class="kctl"><span>Metronome click <output id="kClickOut"></output></span><input type="range" id="kClick" min="0" max="150" step="5"></label>
     </div>
-    <p>Changes apply right away, even while a groove is playing. Your kit is saved in this browser and used for every groove.</p>
+    <p>Changes apply right away, even while a groove is playing. Your kit is saved in this browser and used for every groove. The recorded jazz kit uses samples from Virtuosity Drums (public domain); its Length slider can shorten a drum but not lengthen it.</p>
   </div>
 </dialog>
 
@@ -1203,6 +1206,7 @@ const KITS = {
   rock: {label: 'Big rock', p: {
     bd: {pitch: -2, decay: 1.3, vol: 1.15}, sn: {pitch: -1, decay: 1.5, vol: 1.1}, t1: {pitch: -2, decay: 1.5}, t2: {pitch: -2, decay: 1.5},
     ft: {pitch: -3, decay: 1.6}, cr: {pitch: -1, decay: 1.6, vol: 1.1}, rd: {decay: 1.2}}},
+  studio: {label: 'Recorded jazz kit', sampled: true, p: {}},
 };
 const KDEF = {pitch: 0, decay: 1, vol: 1};
 const clampN = (v, lo, hi, d) => { v = +v; return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
@@ -1225,10 +1229,56 @@ function choke(t) {
   if (!openHH) return;
   openHH.gain.setValueAtTime(1, t); openHH.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); openHH = null;
 }
+/* recorded kit: one-shot samples (Virtuosity Drums, CC0), fetched the first time the kit is used */
+const SDIR = 'samples/virtuosity/', SGAIN = 2;
+// drum -> state -> [file, level trim]; shift retunes a sample, in semitones (the kit has no mid tom)
+const SMAP = {
+  cr: {n: ['crash', 3], a: ['crash-accent', 2.2]},
+  hh: {n: ['hihat', 1.8], a: ['hihat-accent', 0.7], o: ['hihat-open', 1.8]},
+  rd: {n: ['ride', 2], a: ['ride-accent', 1.6]},
+  t1: {n: ['tom-high', 1], a: ['tom-high-accent', 1]},
+  t2: {n: ['tom-high', 1], a: ['tom-high-accent', 1], shift: -4},
+  sn: {n: ['snare', 1.1], a: ['snare-accent', 0.7], g: ['snare-ghost', 1.3], c: ['snare-cross-stick', 1.2]},
+  ft: {n: ['tom-floor', 1.5], a: ['tom-floor-accent', 1.3]},
+  bd: {n: ['kick', 1], a: ['kick-accent', 0.85]},
+  hf: {n: ['hihat-foot', 1]},
+};
+const SNAMES = [...new Set(Object.values(SMAP).flatMap(m => Object.values(m).filter(Array.isArray).map(x => x[0])))];
+const smp = {buf: {}, ready: false, failed: false, p: null};
+const sampledKit = () => !!(KITS[kit.preset === 'custom' ? kit.base : kit.preset] || {}).sampled;
+function loadSamples() {
+  if (!smp.p) smp.p = Promise.all(SNAMES.map(n => fetch(SDIR + n + '.flac')
+      .then(r => { if (!r.ok) throw new Error(n); return r.arrayBuffer(); })
+      .then(b => new Promise((res, rej) => AC.decodeAudioData(b, res, rej)))
+      .then(b => { smp.buf[n] = b; })))
+    .then(() => { smp.ready = true; },
+      () => { smp.failed = true; smp.p = null; toast("The recorded kit couldn't be loaded, so the built-in sounds are playing instead."); });
+  return smp.p;
+}
+// run fn once the recorded kit, if it is the one selected, has loaded; straight away otherwise
+function withKit(fn) {
+  audio();
+  if (sampledKit() && !smp.ready && !smp.failed) loadSamples().then(fn); else fn();
+}
+function sampleHit(id, st, t, P) {
+  const m = SMAP[id], [name, trim] = m[st] || m.n, buf = smp.buf[name];
+  if (!buf) return false;
+  const src = AC.createBufferSource(), g = AC.createGain(), rate = Math.pow(2, (P.pitch + (m.shift || 0)) / 12);
+  src.buffer = buf; src.playbackRate.value = rate;
+  g.gain.setValueAtTime(P.vol * trim * SGAIN, t);
+  // a recording can be shortened, not lengthened
+  if (P.decay < 1) g.gain.setTargetAtTime(0, t + 0.01, buf.duration / rate * 0.3 * P.decay / (1 - P.decay));
+  let dest = master;
+  if (id === 'hh' || id === 'hf') choke(t);
+  if (id === 'hh' && st === 'o') { dest = AC.createGain(); dest.connect(master); openHH = dest; }
+  src.connect(g); g.connect(dest); src.start(t);
+  return true;
+}
 const VEL = {n:0.8, a:1, g:0.26, o:0.85, c:0.8};
 function hit(id, st, t) {
   const P = kit.p[id] || KDEF;
   if (!P.vol) return;
+  if (smp.ready && sampledKit() && sampleHit(id, st, t, P)) return;
   const v = (VEL[st] || 0.8) * P.vol, r = Math.pow(2, P.pitch / 12), D = P.decay;
   switch (id) {
     case 'bd': osc('sine', 150 * r, 44 * r, t, 0.45 * D, env(t, v * 1.15, 0.42 * D)); noise(t, 0.02, env(t, v * 0.25, 0.02, filt('highpass', fq(1500 * r), 0, master))); break;
@@ -1254,7 +1304,7 @@ function hit(id, st, t) {
   }
 }
 function click(t, down) { if (kit.click) osc('sine', down ? 1760 : 1250, 0, t, 0.06, env(t, (down ? 0.45 : 0.28) * kit.click, 0.04)); }
-function preview(id, st) { try { audio(); hit(id, st, AC.currentTime + 0.01); } catch {} }
+function preview(id, st) { try { withKit(() => hit(id, st, AC.currentTime + 0.01)); } catch {} }
 
 /* ---------- transport ---------- */
 // cur.si indexes the play order (repeats unrolled); cur.ci is the step within that bar
@@ -1308,7 +1358,12 @@ function seek() {
   nextT = AC.currentTime + 0.04;
 }
 function play() {
-  audio(); playing = true; endAt = 0; queue = [];
+  if (sampledKit() && !smp.ready && !smp.failed) $('#roSub').textContent = 'Loading kit…';
+  withKit(startPlay);
+}
+function startPlay() {
+  if (playing) return;
+  playing = true; endAt = 0; queue = [];
   const st = startIndex(); cur = {si: st.si, ci: st.ci}; nextT = AC.currentTime + 0.08;
   countQ = prefs.count ? groups(S.measures[order[st.si].m]) : [];
   sched(); timer = setInterval(sched, 25);
@@ -1510,7 +1565,7 @@ function renderKitSelect() {
 }
 $('#kitSel').addEventListener('change', e => {
   const v = e.target.value; if (v === 'custom') return;
-  kit.preset = v; kit.base = v; kit.p = presetParams(v); saveKit(); renderKit(); demoBeat();
+  kit.preset = v; kit.base = v; kit.p = presetParams(v); smp.failed = false; saveKit(); renderKit(); demoBeat();
 });
 $('#kitReset').addEventListener('click', () => {
   const b = kit.preset === 'custom' ? (kit.base || 'acoustic') : kit.preset;
@@ -1522,8 +1577,11 @@ $('#kClick').addEventListener('input', e => { kit.click = +e.target.value / 100;
 $('#kClick').addEventListener('change', () => { try { audio(); click(AC.currentTime + 0.01, true); } catch {} });
 // one bar of rock beat plus a tom run, so a kit can be heard without leaving the panel
 function demoBeat() {
+  try { withKit(playDemo); } catch {}
+}
+function playDemo() {
   try {
-    audio(); const t0 = AC.currentTime + 0.05, e = 60 / 110 / 2;
+    const t0 = AC.currentTime + 0.05, e = 60 / 110 / 2;
     const seq = [[0, 'bd'], [0, 'cr'], [1, 'hh'], [2, 'sn'], [2, 'hh'], [3, 'hh'], [4, 'bd'], [4, 'hh'], [5, 'bd'], [5, 'hh'], [6, 'sn'], [6, 'hh'],
       [7, 't1'], [7.5, 't2'], [8, 'ft'], [8.5, 'ft'], [9, 'bd'], [9, 'rd'], [10, 'rd'], [10, 'hf'], [11, 'rd']];
     for (const [k, id] of seq) hit(id, 'n', t0 + k * e);
