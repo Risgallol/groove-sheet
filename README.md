@@ -19,6 +19,7 @@ Open `index.html` in a browser. There is no build step and no server. The one ex
 - **Kit:** the Kit button opens per-drum pitch (±12 semitones), length and volume sliders, with a play button for each drum. It has five synthesized presets (Acoustic, Electronic 808, Jazz, Tight funk, Big rock) and one recorded kit, plus master and metronome volume and a demo beat. The recorded kit is the default on a first visit and its samples load when the page opens. It plays the samples in `samples/virtuosity/` (from Virtuosity Drums, CC0; see `SOURCE.md` there) and falls back to the synthesized sounds if they can't be loaded. The kit is saved in the browser and used for every groove.
 - **Recording:** the Record button loops the selected bars (all bars if none are selected) with the click on, after a one-bar count-in. Tap K for kick, S for snare and H for hi-hat, or use the on-screen pads; each hit snaps to the nearest step, with output latency taken into account. Space or Esc stops, and one Undo removes the whole take.
 - **Quick start:** a button in the header opens a one-page guide to everything above, with the keyboard shortcuts.
+- **Feedback:** the Feedback button opens a short form (name and email optional) that is posted to Formspree, which emails it on.
 - **Saving and sharing:** a library of saved grooves (kept in the browser), share codes (`GS2.`), share links, and PDF export (A4, vector).
 
 ## Keyboard
@@ -42,6 +43,8 @@ The current draft, the library, the bar clipboard and view settings are stored i
 The site is `index.html` plus the `samples/virtuosity/` folder. Any static host works (Vercel, GitHub Pages, Netlify, Cloudflare Pages); there is nothing to build. The `original/` folder is not part of the site.
 
 When the page is served over http(s), the Share dialog also offers **Copy link**. The link is the page's address followed by `#` and the share code, so the groove travels inside the link and nothing is stored on a server. Opening such a link replaces the visitor's current draft; Undo brings it back.
+
+Analytics: the page loads Vercel Web Analytics (`/_vercel/insights/script.js`), which only works once Analytics is enabled for the project in the Vercel dashboard. It also sends three custom events, `Play`, `PDF export` and `Share link copied`; Vercel records custom events only on Pro and Enterprise plans. Elsewhere (opened from disk, localhost) the script is missing and the events are dropped harmlessly.
 
 `original/index.html` is the version from before the website changes (no share links, no link-preview tags, no favicon), kept for personal use.
 

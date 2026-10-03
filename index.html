@@ -12,6 +12,9 @@
 <meta name="theme-color" content="#E8EAED" media="(prefers-color-scheme:light)">
 <meta name="theme-color" content="#0F1114" media="(prefers-color-scheme:dark)">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect x='1' y='1' width='32' height='32' rx='8' fill='%2316191E'/%3E%3Cg stroke='%23fff' opacity='.55'%3E%3Cpath d='M6 10h22M6 14h22M6 18h22M6 22h22M6 26h22'/%3E%3C/g%3E%3Cpath d='M10 18l4 4M14 18l-4 4' stroke='%23E2A445' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M14.2 8.5V18.5M22.8 8.5v11' stroke='%23fff' stroke-width='1.4'/%3E%3Cellipse cx='20' cy='20' rx='3' ry='2.2' transform='rotate(-20 20 20)' fill='%23fff'/%3E%3Crect x='14' y='7.6' width='9.4' height='2.4' fill='%23fff'/%3E%3C/svg%3E">
+<!-- Vercel Web Analytics: page views; the script only exists once Analytics is enabled for the project on Vercel -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,600&family=Barlow+Condensed:wght@500;600;700&display=swap">
@@ -242,6 +245,12 @@ dialog::backdrop{background:rgba(10,12,16,.45)}
 .dlg h3{margin:0;font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:.03em}
 .dlg h4{margin:4px 0 0;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .dlg p{margin:0;color:var(--ink-2);font-size:14px}
+.fb{display:flex;flex-direction:column;gap:12px}
+.fb label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.fb label i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+.fb input,.fb textarea{border:1px solid var(--line-2);border-radius:8px;background:var(--paper);padding:8px 10px;font-size:15px;letter-spacing:0;text-transform:none;font-weight:400;color:var(--ink)}
+.fb textarea{min-height:110px;resize:vertical}
+.fb input:focus,.fb textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
 .qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 26px}
 .qs section{display:flex;flex-direction:column;gap:6px}
 .qs h4{margin:0}
@@ -292,6 +301,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
     </div>
     <div class="top-act">
     <button class="btn" id="helpBtn" title="What everything on this page does"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2v.1"/></svg>Quick start</button>
+    <button class="btn" id="fbBtn" title="Tell us what works, what doesn't, or what you'd like"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg>Feedback</button>
     <a class="btn" href="https://buymeacoffee.com/auguri" target="_blank" rel="noopener" title="Support Groove Sheet"><svg class="i" viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
     </div>
     <div class="keys"><span><kbd>Space</kbd> play / stop</span><span><kbd>⌘/Ctrl</kbd> <kbd>Z</kbd> undo</span><span><kbd>⇧</kbd> <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd> redo</span><span><kbd>⌘/Ctrl</kbd> <kbd>C</kbd> <kbd>V</kbd> copy / paste bars</span><span><kbd>Home</kbd> start from the top</span></div>
@@ -480,6 +490,18 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
       </div></section>
     </div>
   </div>
+</dialog>
+
+<dialog id="fbDlg" aria-labelledby="fbTitle">
+  <form class="dlg fb" id="fbForm" action="https://formspree.io/f/mandnqbk" method="POST">
+    <div class="dlg-h"><h3 id="fbTitle">Share your feedback</h3><button type="button" class="btn icon" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <p>Groove Sheet is new, and your thoughts help shape it: what works, what doesn't, what you'd like it to do.</p>
+    <input type="hidden" name="_subject" value="New feedback from Groove Sheet">
+    <label><span>Name <i>(optional)</i></span><input type="text" name="name" autocomplete="name" maxlength="100"></label>
+    <label><span>Email <i>(optional, if you'd like a reply)</i></span><input type="email" name="email" autocomplete="email" maxlength="200"></label>
+    <label>Feedback<textarea name="message" required maxlength="5000" placeholder="What worked, what didn't, or any ideas…"></textarea></label>
+    <div class="row-end"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary" id="fbSend">Send feedback</button></div>
+  </form>
 </dialog>
 
 <dialog id="shareDlg">
@@ -1562,7 +1584,9 @@ function setPlayIcon() {
     : '<svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>';
   b.setAttribute('aria-label', playing ? 'Stop' : 'Play');
 }
-const togglePlay = () => playing ? stop() : play();
+// Vercel Web Analytics custom event (recorded on Pro plans); harmless where the analytics script isn't loaded
+const track = name => { try { window.va && window.va('event', {name}); } catch {} };
+const togglePlay = () => { if (playing) stop(); else { track('Play'); play(); } };
 
 /* ---------- recording: play along and tap in kick, snare and hi-hat ---------- */
 const REC_KEYS = {k: 'bd', s: 'sn', h: 'hh'};   // by letter: K kick, S snare, H hi-hat
@@ -1857,6 +1881,20 @@ function sanitize(g) {
 $('#shareBtn').addEventListener('click', () => { $('#shareOut').value = encode(S); $('#shareIn').value = ''; $('#shareDlg').showModal(); });
 $('#shareDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 $('#helpBtn').addEventListener('click', () => $('#helpDlg').showModal());
+/* feedback: sent to Formspree, which emails it on; posted in the background so the page stays put */
+$('#fbBtn').addEventListener('click', () => $('#fbDlg').showModal());
+$('#fbDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#fbForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.currentTarget, b = $('#fbSend');
+  b.disabled = true; b.textContent = 'Sending…';
+  try {
+    const r = await fetch(f.action, {method: 'POST', body: new FormData(f), headers: {Accept: 'application/json'}});
+    if (!r.ok) throw new Error(r.status);
+    f.reset(); $('#fbDlg').close(); toast('Thanks! Your feedback was sent.');
+  } catch { toast("Your feedback couldn't be sent. Check your connection and try again."); }
+  finally { b.disabled = false; b.textContent = 'Send feedback'; }
+});
 $('#helpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 function copyOut(text, what) {
   const ta = $('#shareOut'); ta.value = text;
@@ -1871,7 +1909,7 @@ if (canLink) {
   $('#copyLinkBtn').hidden = false;
   $('#shareHelp').textContent = 'The link opens this groove for anyone who clicks it. The code holds the same groove, for pasting into Groove Sheet.';
 }
-$('#copyLinkBtn').addEventListener('click', () => copyOut(location.href.split('#')[0] + '#' + encode(S), 'Link'));
+$('#copyLinkBtn').addEventListener('click', () => { track('Share link copied'); copyOut(location.href.split('#')[0] + '#' + encode(S), 'Link'); });
 // had: the visitor already had a groove of their own open
 function openFromHash(had) {
   const h = location.hash.slice(1); if (!/^GS[12]\./.test(h)) return;
@@ -1969,6 +2007,7 @@ $('#pdfBtn').addEventListener('click', async e => {
   b.disabled = true; lbl.textContent = 'Preparing…';
   try {
     const blob = await buildPDF();
+    track('PDF export');
     const name = ((S.title || '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'Groove') + '.pdf';
     const dl = await getDownloads();
     if (dl) {
