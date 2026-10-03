@@ -1171,7 +1171,9 @@ function audio() {
   if (!AC) {
     const C = window.AudioContext || window.webkitAudioContext; AC = new C();
     const comp = AC.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 4;
-    master = AC.createGain(); master.gain.value = MASTER * kit.master; master.connect(comp); comp.connect(AC.destination);
+    // a hard limiter last, so loud passages are held under full scale instead of clipping
+    const lim = AC.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.1;
+    master = AC.createGain(); master.gain.value = MASTER * kit.master; master.connect(comp); comp.connect(lim); lim.connect(AC.destination);
     NB = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
     const d = NB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   }
@@ -1247,9 +1249,9 @@ const SMAP = {
   rd: {n: ['ride', 2], a: ['ride-accent', 1.6]},
   t1: {n: ['tom-high', 1], a: ['tom-high-accent', 1]},
   t2: {n: ['tom-high', 1], a: ['tom-high-accent', 1], shift: -4},
-  sn: {n: ['snare', 1.1], a: ['snare-accent', 0.7], g: ['snare-ghost', 1.3], c: ['snare-cross-stick', 1.2]},
+  sn: {n: ['snare', 1.1], a: ['snare-accent', 1], g: ['snare-ghost', 1.3], c: ['snare-cross-stick', 1.2]},
   ft: {n: ['tom-floor', 1.5], a: ['tom-floor-accent', 1.3]},
-  bd: {n: ['kick', 1], a: ['kick-accent', 0.85]},
+  bd: {n: ['kick', 1], a: ['kick-accent', 1.25]},
   hf: {n: ['hihat-foot', 1]},
 };
 const SNAMES = [...new Set(Object.values(SMAP).flatMap(m => Object.values(m).filter(Array.isArray).map(x => x[0])))];

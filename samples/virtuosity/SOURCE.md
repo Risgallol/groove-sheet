@@ -16,11 +16,11 @@ For every hit, the kick-mic, snare-mic and overhead-mic recordings of the same t
 
 | File | Source take (`Samples/<mic>/<drum>/<mic>_…`) | Length |
 | --- | --- | --- |
-| `kick` | `kick_snon_vl3_rr1` | 1.0 s (cap) |
-| `kick-accent` | `kick_snon_vl4_rr1` | 1.0 s (cap) |
+| `kick` | `kick_snoff_vl4_rr2` (see below) | 0.42 s |
+| `kick-accent` | `kick_snoff_vl4_rr4` (see below) | 0.42 s |
 | `snare-ghost` | `snare_center_vl9` | 0.6 s (cap) |
-| `snare` | `snare_center_vl26` | 0.42 s |
-| `snare-accent` | `snare_center_vl36` | 0.42 s |
+| `snare` | `snare_center_vl30` (see below) | 0.42 s |
+| `snare-accent` | `snare_center_vl36` (see below) | 0.42 s |
 | `snare-cross-stick` | `snare_crossstick_vl12` | 0.7 s (cap) |
 | `hihat` | `hh_closed_vl3_rr1` | 0.48 s |
 | `hihat-accent` | `hh_closed_vl4_rr1` | 0.31 s |
@@ -34,5 +34,9 @@ For every hit, the kick-mic, snare-mic and overhead-mic recordings of the same t
 | `tom-high-accent` | `htom_center_vl16` | 0.88 s |
 | `tom-floor` | `ltom_center_vl11` | 1.82 s |
 | `tom-floor-accent` | `ltom_center_vl16` | 1.68 s |
+
+The two kick files are processed further, because the recorded kick has almost no sound above 120 Hz and disappears on small speakers. Each is the hardest hit with the snare wires off, blended 50/50 with a soft-saturated (tanh) copy, lifted +4 dB at 180 Hz and +6 dB at 3.5 kHz, peak-matched to the unprocessed hit, then given a shorter tail: full level for 70 ms, an exponential decay (time constant 70 ms) after that, cut at 0.42 s with a 20 ms fade.
+
+The `snare` and `snare-accent` files are shaped for more snap: the first few milliseconds lifted (up to +5 dB, fading out with a 6 ms time constant), EQ of +2 dB at 200 Hz, −2 dB at 900 Hz and +5 dB at 4.5 kHz, and a shorter ring (full level for 50 ms, then an exponential decay with a 90 ms time constant), cut at 0.42 s. Their levels are set so the normal hit plays 3 dB louder than the first version, with the accent the same 4.4 dB above it.
 
 In the take names, `vl` is the velocity layer (higher is louder) and `rr` the round-robin take. The kit has two toms, so there is no separate mid-tom sample.
