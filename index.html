@@ -202,6 +202,18 @@ kbd{font-family:var(--body);font-size:11.5px;font-weight:600;border:1px solid va
 .tg svg.i{width:16px;height:16px;stroke-width:1.6}
 .rsel{height:26px;border:1px solid var(--accent);border-radius:6px;background:var(--accent-soft);font-size:13px;font-weight:600;padding:0 2px}
 .simnote{height:24px;display:flex;align-items:center;padding:0 8px;border-radius:5px;background:var(--cell);font-size:12.5px;color:var(--ink-2);font-style:italic;white-space:nowrap}
+.btn.rec{color:var(--danger)}
+.btn.rec .lbl{color:var(--ink)}
+.btn.rec[aria-pressed="true"]{background:var(--danger);border-color:var(--danger);color:var(--paper)}
+.btn.rec[aria-pressed="true"] .lbl{color:var(--paper)}
+.recbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:10px 12px;border:1.5px solid var(--danger);border-radius:12px;background:var(--surface)}
+.recbar b{font-weight:600}
+.recdot{width:10px;height:10px;border-radius:50%;background:var(--danger);animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.pads{display:flex;gap:8px;flex-wrap:wrap}
+.pad{min-width:104px;height:52px;border:1px solid var(--line-2);border-left:4px solid var(--c);border-radius:9px;background:var(--paper);display:flex;align-items:center;gap:8px;padding:0 12px;font-weight:600;touch-action:manipulation;user-select:none}
+.pad.hit{background:var(--accent-soft)}
+.rechint{color:var(--ink-3);font-size:13px}
 .selbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 16px 12px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
 .selbar[hidden]{display:none}
 .selbar b{font-weight:600;font-size:14px;margin-right:4px}
@@ -250,7 +262,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
   .sep{display:none}
   .keys{display:none}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.recdot{animation:none}}
 </style>
 </head>
 <body>
@@ -280,6 +292,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
       <button class="play" id="playBtn" aria-label="Play"></button>
       <div class="readout" aria-live="off"><b id="roMain">Bar 1</b><span id="roSub">Stopped</span></div>
       <label class="fromfld" title="Where playback starts. You can also click the score or a count in the grid.">Start <select id="fromSel"></select></label>
+      <button class="btn rec" id="recBtn" aria-pressed="false" title="Record: play along with the click and tap K (kick), S (snare) and H (hi-hat). Select bars first to record into only those."><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor" stroke="none"/></svg><span class="lbl">Record</span></button>
     </div>
     <div class="sep"></div>
     <div class="grp tempo">
@@ -311,6 +324,17 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
       <button class="btn" id="pdfBtn" title="Save the score as a PDF"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/><path d="M12 10v7"/><path d="m9 14 3 3 3-3"/></svg><span class="lbl">PDF</span></button>
       <button class="btn icon" id="fsBtn" aria-label="Fullscreen" title="Fullscreen"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     </div>
+  </div>
+
+  <div class="recbar" id="recBar" role="region" aria-label="Recording" hidden>
+    <span class="recdot" aria-hidden="true"></span>
+    <b id="recInfo"></b>
+    <div class="pads">
+      <button class="pad fam-kick" data-pad="bd"><kbd>K</kbd>Kick</button>
+      <button class="pad fam-drum" data-pad="sn"><kbd>S</kbd>Snare</button>
+      <button class="pad fam-cym" data-pad="hh"><kbd>H</kbd>Hi-hat</button>
+    </div>
+    <span class="rechint">Hits snap to the nearest step. Space or Esc stops; Undo removes the whole take.</span>
   </div>
 
   <section class="sheet" id="sheetSec" aria-label="Drum score">
@@ -543,8 +567,11 @@ function repeatSections() {
   });
   return out;
 }
+// while recording: {a, b} the bars that loop, log of scheduled steps, skip: notes not to replay this pass, snap: undo step taken
+let rec = null;
 // bars in the order they are played, with repeat pass numbers
 function playOrder() {
+  if (rec) return range(rec.a, rec.b + 1, 1).map(m => ({m}));
   const secs = repeatSections(), seq = []; let i = 0;
   while (i < S.measures.length) {
     const sec = secs.find(x => x.s === i);
@@ -1338,6 +1365,7 @@ function fixStart() {
 // first time the marked bar comes up in the play order (pass 1 of any repeat)
 function startIndex() {
   order = playOrder();
+  if (rec) return {si: 0, ci: 0};
   const si = Math.max(0, order.findIndex(o => o.m === startPos.m));
   return {si, ci: Math.max(0, S.measures[order[si].m].cells.indexOf(startPos.t))};
 }
@@ -1379,17 +1407,19 @@ function startPlay() {
   if (playing) return;
   playing = true; endAt = 0; queue = [];
   const st = startIndex(); cur = {si: st.si, ci: st.ci}; nextT = AC.currentTime + 0.08;
-  countQ = prefs.count ? groups(S.measures[order[st.si].m]) : [];
+  countQ = prefs.count || rec ? groups(S.measures[order[st.si].m]) : [];
   sched(); timer = setInterval(sched, 25);
   cancelAnimationFrame(raf); raf = requestAnimationFrame(draw);
   setPlayIcon();
 }
 function stop() {
+  const wasRec = !!rec; rec = null;
   playing = false; clearInterval(timer); cancelAnimationFrame(raf); queue = []; lastPos = null;
   if (openHH && AC) choke(AC.currentTime);
   clearNow(); const ph = $('#phs'); if (ph) ph.setAttribute('width', 0);
   $('#roMain').textContent = `Bar ${startPos.m + 1}`; $('#roSub').textContent = 'Stopped';
   setPlayIcon();
+  if (wasRec) { fixCursor(); updateRecUI(); saveDraft(); updateUndo(); queueScore(); }
 }
 function sched() {
   while (!endAt && nextT < AC.currentTime + 0.12) {
@@ -1399,18 +1429,20 @@ function sched() {
       click(nextT, a === 0); queue.push({time: nextT, count: true, m: 0, t: a});
       nextT += (b - a) * spt; continue;
     }
+    if (rec && rec.b >= S.measures.length) { stop(); return; }   // recorded bars were deleted
     if (cur.si >= order.length) cur.si = 0;
     const o = order[cur.si], m = S.measures[o.m], src = S.measures[sourceOf(o.m)];
     if (cur.ci >= m.cells.length) cur.ci = 0;
     const t = m.cells[cur.ci], nx = cellEnd(m, cur.ci);
-    for (const ins of INSTR) { const v = src.notes[ins.id] && src.notes[ins.id][t]; if (v) hit(ins.id, v, nextT); }
-    if (prefs.metro && groups(m).some(g => g[0] === t)) click(nextT, t === 0);
+    for (const ins of INSTR) { const v = src.notes[ins.id] && src.notes[ins.id][t]; if (v && !(rec && rec.skip.delete(`${ins.id}@${o.m}:${t}`))) hit(ins.id, v, nextT); }
+    if ((prefs.metro || rec) && groups(m).some(g => g[0] === t)) click(nextT, t === 0);
+    if (rec) { rec.log.push({time: nextT, m: o.m, t, dur: (nx - t) * spt}); if (rec.log.length > 64) rec.log.shift(); }
     queue.push({time: nextT, m: o.m, t, pass: o.pass, total: o.total});
     nextT += (nx - t) * spt; cur.ci++;
     if (cur.ci >= m.cells.length) {
       cur.ci = 0; cur.si++;
       if (cur.si >= order.length) {
-        if (prefs.loop) { const st = startIndex(); cur.si = st.si; cur.ci = st.ci; }
+        if (prefs.loop || rec) { const st = startIndex(); cur.si = st.si; cur.ci = st.ci; }
         else endAt = nextT;
       }
     }
@@ -1466,6 +1498,57 @@ function setPlayIcon() {
   b.setAttribute('aria-label', playing ? 'Stop' : 'Play');
 }
 const togglePlay = () => playing ? stop() : play();
+
+/* ---------- recording: play along and tap in kick, snare and hi-hat ---------- */
+const REC_KEYS = {k: 'bd', s: 'sn', h: 'hh'};   // by letter: K kick, S snare, H hi-hat
+function startRec() {
+  if (playing) stop();
+  rec = {a: sel ? sel.a : 0, b: sel ? sel.b : S.measures.length - 1, log: [], skip: new Set(), snap: false};
+  updateRecUI(); play();
+}
+function updateRecUI() {
+  $('#recBtn').setAttribute('aria-pressed', String(!!rec));
+  $('#recBar').hidden = !rec;
+  if (rec) $('#recInfo').textContent = `Recording ${rec.a === rec.b ? 'bar ' + (rec.a + 1) : `bars ${rec.a + 1}–${rec.b + 1}`} on a loop, after one bar of count-in`;
+}
+// the AudioContext time the listener was hearing at event time ts, so output latency doesn't make every hit late
+function heardAt(ts) {
+  const o = AC.getOutputTimestamp ? AC.getOutputTimestamp() : null;
+  if (o && o.performanceTime) return o.contextTime + (ts - o.performanceTime) / 1000;
+  return AC.currentTime - (AC.outputLatency || 0) - (AC.baseLatency || 0);
+}
+function recHit(id, ts) {
+  if (!rec || !AC) return;
+  hit(id, 'n', AC.currentTime); flashPad(id);
+  // candidates: the steps already scheduled, plus the next one
+  const at = heardAt(ts), cands = rec.log.slice();
+  if (!countQ.length && order[cur.si]) {
+    const m = S.measures[order[cur.si].m];
+    if (m && cur.ci < m.cells.length) cands.push({time: nextT, m: order[cur.si].m, t: m.cells[cur.ci], dur: (cellEnd(m, cur.ci) - m.cells[cur.ci]) * 60 / S.tempo / 48, next: true});
+  }
+  let best = null;
+  for (const c of cands) if (!best || Math.abs(c.time - at) < Math.abs(best.time - at)) best = c;
+  if (!best || Math.abs(best.time - at) > best.dur) return;   // nowhere near a step, e.g. during the count-in
+  if (best.next) rec.skip.add(`${id}@${best.m}:${best.t}`);   // it was just heard; don't play it again a moment later
+  const mi = sourceOf(best.m);
+  if ((S.measures[mi].notes[id] || {})[best.t]) return;
+  if (!rec.snap) { snapshot(); rec.snap = true; }
+  setNote(mi, id, best.t, 'n');
+  S.measures.forEach((m, k) => {
+    if (sourceOf(k) !== mi) return;
+    const c = grid.querySelector(`.cell[data-m="${k}"][data-i="${id}"][data-t="${best.t}"]`); if (c) c.dataset.s = 'n';
+  });
+  queueScore(); saveDraft();
+}
+function flashPad(id) {
+  const p = document.querySelector(`[data-pad="${id}"]`); if (!p) return;
+  p.classList.add('hit'); clearTimeout(p._t); p._t = setTimeout(() => p.classList.remove('hit'), 90);
+}
+$('#recBtn').addEventListener('click', () => rec ? stop() : startRec());
+$('#recBar').addEventListener('pointerdown', e => {
+  const p = e.target.closest('[data-pad]'); if (!p) return;
+  e.preventDefault(); recHit(p.dataset.pad, e.timeStamp);
+});
 
 /* ---------- controls ---------- */
 function setTempo(v) {
@@ -1847,6 +1930,11 @@ document.addEventListener('keydown', e => {
   if (document.querySelector('dialog[open]')) return;
   const tag = e.target.tagName, typing = (tag === 'INPUT' && e.target.type !== 'range') || tag === 'TEXTAREA';
   const mod = e.metaKey || e.ctrlKey, k = e.key.toLowerCase();
+  if (rec) {   // while recording only the drum keys and stop work
+    if (e.key === 'Escape' || e.code === 'Space') { e.preventDefault(); stop(); return; }
+    if (REC_KEYS[k] && !mod && !typing) { e.preventDefault(); if (!e.repeat) recHit(REC_KEYS[k], e.timeStamp); }
+    return;
+  }
   if (mod && k === 'z' && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y' && !typing) { e.preventDefault(); redo(); return; }
   if (mod && !typing && !e.shiftKey && getSelection().isCollapsed) {
