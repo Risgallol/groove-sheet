@@ -18,6 +18,7 @@ Open `index.html` in a browser. There is no build step and no server. The one ex
 - **Playback:** synthesized kit, tempo 30–260 with tap tempo, metronome, count-in and loop. Repeats play out in full. Start from any point by clicking the score or a count, or by using the Start menu.
 - **Kit:** the Kit button opens per-drum pitch (±12 semitones), length and volume sliders, with a play button for each drum. It has five synthesized presets (Acoustic, Electronic 808, Jazz, Tight funk, Big rock) and one recorded kit, plus master and metronome volume and a demo beat. The recorded kit is the default on a first visit and its samples load when the page opens. It plays the samples in `samples/virtuosity/` (from Virtuosity Drums, CC0; see `SOURCE.md` there) and falls back to the synthesized sounds if they can't be loaded. The kit is saved in the browser and used for every groove.
 - **Recording:** the Record button loops the selected bars (all bars if none are selected) with the click on, after a one-bar count-in. Tap K for kick, S for snare and H for hi-hat, or use the on-screen pads; each hit snaps to the nearest step, with output latency taken into account. Space or Esc stops, and one Undo removes the whole take.
+- **Quick start:** a button in the header opens a one-page guide to everything above, with the keyboard shortcuts.
 - **Saving and sharing:** a library of saved grooves (kept in the browser), share codes (`GS2.`), share links, and PDF export (A4, vector).
 
 ## Keyboard

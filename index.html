@@ -63,7 +63,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .mark{width:34px;height:34px;flex:none}
 .keys{color:var(--ink-3);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;flex-basis:100%}
 a.btn{text-decoration:none;color:var(--ink)}
-.top>a.btn{align-self:center}
+.top-act{display:flex;gap:8px;align-self:center;flex-wrap:wrap}
 kbd{font-family:var(--body);font-size:11.5px;font-weight:600;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--ink-2);background:var(--surface)}
 
 /* toolbar */
@@ -242,6 +242,13 @@ dialog::backdrop{background:rgba(10,12,16,.45)}
 .dlg h3{margin:0;font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:.03em}
 .dlg h4{margin:4px 0 0;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
 .dlg p{margin:0;color:var(--ink-2);font-size:14px}
+.qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 26px}
+.qs section{display:flex;flex-direction:column;gap:6px}
+.qs h4{margin:0}
+.qs ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.qs b{color:var(--ink);font-weight:600}
+.qs-keys{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;color:var(--ink-2);align-items:center}
+.qs-keys span:nth-child(odd){white-space:nowrap}
 .list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
 .li{display:flex;align-items:center;gap:10px;padding:8px 10px}
 .li+.li{border-top:1px solid var(--line)}
@@ -283,7 +290,10 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
         <p>Write a drum groove on the grid, read it as notation, play it back.</p>
       </div>
     </div>
+    <div class="top-act">
+    <button class="btn" id="helpBtn" title="What everything on this page does"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2v.1"/></svg>Quick start</button>
     <a class="btn" href="https://buymeacoffee.com/auguri" target="_blank" rel="noopener" title="Support Groove Sheet"><svg class="i" viewBox="0 0 24 24"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4z"/><path d="M6 2v2M10 2v2M14 2v2"/></svg>Buy me a coffee</a>
+    </div>
     <div class="keys"><span><kbd>Space</kbd> play / stop</span><span><kbd>⌘/Ctrl</kbd> <kbd>Z</kbd> undo</span><span><kbd>⇧</kbd> <kbd>⌘/Ctrl</kbd> <kbd>Z</kbd> redo</span><span><kbd>⌘/Ctrl</kbd> <kbd>C</kbd> <kbd>V</kbd> copy / paste bars</span><span><kbd>Home</kbd> start from the top</span></div>
   </header>
 
@@ -414,6 +424,61 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
       <label class="kctl"><span>Metronome click <output id="kClickOut"></output></span><input type="range" id="kClick" min="0" max="150" step="5"></label>
     </div>
     <p>Changes apply right away, even while a groove is playing. Your kit is saved in this browser and used for every groove. The recorded jazz kit uses samples from Virtuosity Drums (public domain); its Length slider can shorten a drum but not lengthen it.</p>
+  </div>
+</dialog>
+
+<dialog id="helpDlg" class="wide" aria-labelledby="helpTitle">
+  <div class="dlg">
+    <div class="dlg-h"><h3 id="helpTitle">Quick start</h3><button class="btn icon" data-close aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <p>Groove Sheet turns a drum pattern into notation. Click notes into the grid, read them on the staff above, hear them played back, and share or print the result.</p>
+    <div class="qs">
+      <section><h4>1 · Write a groove</h4><ul>
+        <li><b>Click a cell</b> in the pattern grid to add a note. Clicking again cycles hit → accent → ghost or cross-stick (snare) or open (hi-hat) → off.</li>
+        <li><b>Drag</b> across cells to paint the same note along a row.</li>
+        <li>The score updates as you go. <b>Score / Grid</b> at the top of the sheet shows one or both.</li>
+      </ul></section>
+      <section><h4>2 · Play it</h4><ul>
+        <li><b>Play</b> (or Space) starts and stops. Set the <b>tempo</b> by typing, with the slider, or by pressing <b>Tap</b> in time.</li>
+        <li><b>Click</b> turns the metronome on, <b>Count-in</b> adds a bar of clicks first, and <b>Loop</b> repeats the groove.</li>
+        <li>Click anywhere on the score, or a count (1 e &amp; a) in the grid, to start from there.</li>
+      </ul></section>
+      <section><h4>3 · Record by playing</h4><ul>
+        <li>Press <b>Record</b>. After a bar of count-in, the bars loop with the click.</li>
+        <li>Tap <kbd>K</kbd> kick, <kbd>S</kbd> snare, <kbd>H</kbd> hi-hat, or the on-screen pads. Hits snap to the nearest step.</li>
+        <li>Select bars first to record into only those. Space or Esc stops; Undo removes the whole take.</li>
+      </ul></section>
+      <section><h4>4 · Bars and timing</h4><ul>
+        <li>Each bar has its own <b>time signature</b> (menu next to the bar title) and each beat its own <b>subdivision</b>: 8ths, 16ths, 32nds, triplets.</li>
+        <li><b>Right-click</b> (or Alt-click) a step to split it in two or merge it with the next.</li>
+        <li><b>Add bar</b> is at the end of the grid. The icons by each bar title duplicate, clear or delete it.</li>
+      </ul></section>
+      <section><h4>5 · Song structure</h4><ul>
+        <li>Type a <b>section name</b> (Verse, Chorus…) under a bar title to label it on the score.</li>
+        <li>The <b>repeat</b> buttons start and end a repeat, with a play count up to ×16. <b>%</b> makes a bar repeat the one before.</li>
+        <li>The <b>↵</b> button starts a new score line after that bar.</li>
+      </ul></section>
+      <section><h4>6 · Copy and paste bars</h4><ul>
+        <li>Click a <b>bar title</b> to select it; Shift-click selects a range.</li>
+        <li>Then copy, cut, paste, duplicate, clear, delete or wrap them in repeats from the bar that appears, or with ⌘/Ctrl C, X, V.</li>
+      </ul></section>
+      <section><h4>7 · Sound</h4><ul>
+        <li><b>Kit</b> picks the drum sounds: a recorded jazz kit or five synthesized kits.</li>
+        <li>Each drum has its own pitch, length and volume, with a play button to try it. The kit is remembered in this browser.</li>
+      </ul></section>
+      <section><h4>8 · Save, share, print</h4><ul>
+        <li><b>Save</b> keeps the groove in your <b>Library</b>, stored in this browser only. The Library also has examples to start from.</li>
+        <li><b>Share</b> gives a link that opens the groove for anyone, or a code to paste in.</li>
+        <li><b>PDF</b> saves the score as a printable A4 page.</li>
+      </ul></section>
+      <section><h4>Keyboard</h4><div class="qs-keys">
+        <span><kbd>Space</kbd></span><span>Play / stop</span>
+        <span><kbd>⌘/Ctrl</kbd> <kbd>Z</kbd></span><span>Undo (add <kbd>⇧</kbd> to redo)</span>
+        <span><kbd>⌘/Ctrl</kbd> <kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></span><span>Copy, cut, paste selected bars</span>
+        <span><kbd>Home</kbd></span><span>Start from the top</span>
+        <span><kbd>Esc</kbd></span><span>Clear the selection, or stop recording</span>
+        <span><kbd>K</kbd> <kbd>S</kbd> <kbd>H</kbd></span><span>While recording: kick, snare, hi-hat</span>
+      </div></section>
+    </div>
   </div>
 </dialog>
 
@@ -1791,6 +1856,8 @@ function sanitize(g) {
 }
 $('#shareBtn').addEventListener('click', () => { $('#shareOut').value = encode(S); $('#shareIn').value = ''; $('#shareDlg').showModal(); });
 $('#shareDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+$('#helpBtn').addEventListener('click', () => $('#helpDlg').showModal());
+$('#helpDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 function copyOut(text, what) {
   const ta = $('#shareOut'); ta.value = text;
   const fallback = () => { ta.focus(); ta.select(); toast(`${what} selected. Press ⌘/Ctrl + C to copy.`); };
