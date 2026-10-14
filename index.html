@@ -572,7 +572,6 @@ const BYID = Object.fromEntries(INSTR.map(i => [i.id, i]));
 // duration in ticks -> beams / dot
 const VINFO = {72:{b:0,dot:1},48:{b:0},36:{b:1,dot:1},32:{b:0},24:{b:1},18:{b:2,dot:1},16:{b:1},12:{b:2},8:{b:2},6:{b:3}};
 const STEP_NAME = {36:'dotted 8ths',24:'8ths',18:'dotted 16ths',16:'triplet 8ths',12:'16ths',8:'sextuplet 16ths',6:'32nds'};
-const BOT = 58;   // room below the staff, for the feet voice
 const SECTIONS = ['Intro','Verse','Pre-chorus','Chorus','Bridge','Solo','Breakdown','Build','Fill','Outro'];
 
 // {title, tempo, measures:[{num, den, cells:[tick...], notes:{id:{tick:state}},
@@ -762,23 +761,21 @@ function setNote(mi, id, t, v) {
 let layout = [];
 const scoreW = w => 10 + w * 0.5;          // horizontal room a step gets on the staff
 const showTS = mi => mi === 0 || meterOf(S.measures[mi]) !== meterOf(S.measures[mi - 1]);
-// Room above the staff: the music itself, then a row for text notes and a row for section labels, each only when the
-// groove has any. k is PDF points per score unit (0 on screen): printed text keeps a readable size however far the
-// score is zoomed out. Offsets are relative to the staff's top line.
-function geometry(k) {
+// Text sizes on the score, in score units. k is PDF points per unit (0 on screen): printed text keeps a readable size
+// however far the score is zoomed out.
+function textSizes(k) {
   const fs = (pt, min, screen) => k ? Math.max(min, pt / k) : screen;
-  const G = {lab: fs(9, 15, 17), memo: fs(8, 13, 14), cnt: fs(8, 13, 14), num: fs(6, 10, 10)};
-  let top = Math.max(70, 60 + G.cnt * 0.8) + 2;           // stems, beams, accents and the ×N repeat count
-  if (S.measures.some(m => m.memo && Object.keys(m.memo).length)) { G.memoY = -(top + 3 + G.memo * 0.25); top += G.memo * 1.2 + 3; }
-  if (S.measures.some(m => m.label)) { G.labH = G.lab * 1.45; G.labY = -(top + 4 + G.labH); top += G.labH + 4; }
-  G.TOP = Math.ceil(top + 3); G.SYS = G.TOP + 40 + BOT;
-  return G;
+  return {lab: fs(11.5, 17, 18), memo: fs(10, 15, 15), cnt: fs(10, 15, 15), num: fs(7, 10, 10)};
 }
-let geo = null;   // geometry of the score as drawn on screen
+// While a line of the score is drawn (staff top line at y = 0), how far its music reaches above and below.
+let SPAN = null;
+const span = (...ys) => { if (SPAN) for (const y of ys) { if (y < SPAN.lo) SPAN.lo = y; if (y > SPAN.hi) SPAN.hi = y; } };
 // Lays the score out at logical width LW. Returns one SVG fragment per system (line) plus the bar layout.
-// print: the PDF export, where the time-signature numerals cannot rely on CSS baselines; k as in geometry().
+// Each line is only as tall as what is on it: its music, plus a row for repeat counts, text notes and section labels
+// when that line has any. rows gives each line's y0 and height h; every bar's layout carries its line's y0, y1 and top.
+// print: the PDF export, where the time-signature numerals cannot rely on CSS baselines; k as in textSizes().
 function buildScore(LW, print, k) {
-  const G = geometry(print ? k : 0), TOP = G.TOP, SYS = G.SYS;
+  const G = textSizes(print ? k : 0);
   const CLEF = 30, PADL = 14, PADR = 8, avail = LW - 8 - CLEF, n = S.measures.length;
   const mins = S.measures.map((m, mi) => {
     const ts = showTS(mi) ? 26 : 0, rs = m.rs ? 16 : 0, re = m.re ? 14 : 0; let w = 0;
@@ -802,11 +799,14 @@ function buildScore(LW, print, k) {
     }
     if (cur.length) lines.push(cur);
   }
-  const H = lines.length * SYS + 4, frags = [], layout = [];
+  const frags = [], layout = [], rows = [];
   const tsDy = print ? 9 : 0;
+  let yCur = 2;
   lines.forEach((ids, li) => {
     let o = '';
-    const top = li * SYS + TOP, x0 = 4;
+    // drawn with the staff's top line at y = 0, then moved into place once the line's height is known
+    const top = 0, x0 = 4, labels = [], memos = [], counts = [];
+    SPAN = {lo: print ? -16 : -26, hi: 46};   // on screen, room for the start marker's flag
     const sum = ids.reduce((a, i) => a + mins[i].min, 0);
     let s = avail / sum;
     if (li === lines.length - 1 && lines.length > 1 && sum < avail * 0.6) s = Math.min(s, 1.3);
@@ -835,10 +835,7 @@ function buildScore(LW, print, k) {
         const rx = mx + mm.ts + 2;
         body += `<rect class="ink" x="${r1(rx)}" y="${top}" width="4" height="40"/><line class="bl" x1="${r1(rx+7)}" x2="${r1(rx+7)}" y1="${top}" y2="${top+40}"/><circle class="ink" cx="${r1(rx+11.5)}" cy="${top+15}" r="2"/><circle class="ink" cx="${r1(rx+11.5)}" cy="${top+25}" r="2"/>`;
       }
-      if (m.label) {   // section mark in a box above the bar
-        const bw = m.label.length * G.lab * (print ? 0.6 : 0.545) + G.lab, lx = mx + (mm.ts ? 2 : 4);
-        body += `<rect class="rbox" x="${r1(lx)}" y="${r1(top + G.labY)}" width="${r1(bw)}" height="${r1(G.labH)}" rx="3"/><text class="rtxt" font-size="${r1(G.lab)}" x="${r1(lx + G.lab * 0.5)}" y="${r1(top + G.labY + G.labH * 0.72)}">${esc(m.label)}</text>`;
-      }
+      if (m.label) labels.push({x: mx + (mm.ts ? 2 : 4), s: m.label});
       if (m.sim) {    // one-bar repeat sign
         const cx = x1 + mm.notes * k / 2;
         body += `<path class="ink" d="M${r1(cx-9)} ${top+30}L${r1(cx+5)} ${top+10}L${r1(cx+9)} ${top+10}L${r1(cx-5)} ${top+30}Z"/><circle class="ink" cx="${r1(cx-6)}" cy="${top+14}" r="2.6"/><circle class="ink" cx="${r1(cx+6)}" cy="${top+26}" r="2.6"/>`;
@@ -849,24 +846,43 @@ function buildScore(LW, print, k) {
       const bx = mx + mw;
       if (m.re) {     // end repeat: dots, thin, thick, and how many times to play
         body += `<circle class="ink" cx="${r1(bx-12.5)}" cy="${top+15}" r="2"/><circle class="ink" cx="${r1(bx-12.5)}" cy="${top+25}" r="2"/><line class="bl" x1="${r1(bx-7)}" x2="${r1(bx-7)}" y1="${top}" y2="${top+40}"/><rect class="ink" x="${r1(bx-4)}" y="${top}" width="4" height="40"/>`;
-        body += `<text class="rcount" font-size="${r1(G.cnt)}" x="${r1(bx)}" y="${top - 60}">×${m.re}</text>`;
+        counts.push({x: bx, s: '×' + m.re});
       } else if (mi === n - 1) body += `<line class="bl" x1="${r1(bx-7)}" x2="${r1(bx-7)}" y1="${top}" y2="${top+40}"/><rect class="ink" x="${r1(bx-4)}" y="${top}" width="4" height="40"/>`;
       else body += `<line class="bl" x1="${r1(bx)}" x2="${r1(bx)}" y1="${top}" y2="${top+40}"/>`;
-      for (const t in m.memo || {}) body += `<text class="memo" font-size="${r1(G.memo)}" x="${r1(xOf(+t) - 5)}" y="${r1(top + G.memoY)}">${esc(m.memo[t])}</text>`;
+      for (const t in m.memo || {}) memos.push({x: xOf(+t) - 5, s: m.memo[t]});
       mx += mw;
     });
     for (let q = 0; q < 5; q++) o += `<line class="sl" x1="${x0}" x2="${r1(mx)}" y1="${top + q*10}" y2="${top + q*10}"/>`;
     o += `<rect class="ink" x="${x0+9}" y="${top+10}" width="3.6" height="20"/><rect class="ink" x="${x0+16}" y="${top+10}" width="3.6" height="20"/>`;
     o += `<text class="mnum" font-size="${r1(G.num)}" x="${x0}" y="${top - 12}">${ids[0] + 1}</text>` + body;
-    frags.push(o);
+    span(-12 - G.num * 0.8);
+    // rows stacked above the music, nearest first: repeat counts, text notes, section labels in boxes
+    let lo = SPAN.lo;
+    if (counts.length) {
+      const y = lo - 3; lo = y - G.cnt * 0.8;
+      for (const c of counts) o += `<text class="rcount" font-size="${r1(G.cnt)}" x="${r1(c.x)}" y="${r1(y)}">${c.s}</text>`;
+    }
+    if (memos.length) {
+      const y = lo - 4 - G.memo * 0.25; lo -= G.memo * 1.2 + 4;
+      for (const c of memos) o += `<text class="memo" font-size="${r1(G.memo)}" x="${r1(c.x)}" y="${r1(y)}">${esc(c.s)}</text>`;
+    }
+    if (labels.length) {
+      const h = G.lab * 1.45, y = lo - 5 - h; lo = y;
+      for (const c of labels) o += `<rect class="rbox" x="${r1(c.x)}" y="${r1(y)}" width="${r1(c.s.length * G.lab * (print ? 0.6 : 0.545) + G.lab)}" height="${r1(h)}" rx="3"/><text class="rtxt" font-size="${r1(G.lab)}" x="${r1(c.x + G.lab * 0.5)}" y="${r1(y + h * 0.72)}">${esc(c.s)}</text>`;
+    }
+    const above = Math.ceil(6 - lo), h = above + Math.ceil(SPAN.hi + 12), at = yCur + above;
+    for (const mi of ids) Object.assign(layout[mi], {top: at, y0: yCur, y1: yCur + h});
+    frags.push(`<g transform="translate(0 ${at})">${o}</g>`); rows.push({y0: yCur, h});
+    yCur += h;
   });
-  return {frags, H, layout, G};
+  SPAN = null;
+  return {frags, H: yCur + 2, layout, rows};
 }
 function renderScore() {
   const host = $('#score'); if (host.offsetParent === null) return;
   const W = host.clientWidth || 800, z = prefs.zoom / 100, LW = W / z, n = S.measures.length;
   const built = buildScore(LW, false), H = built.H;
-  layout = built.layout; geo = built.G;
+  layout = built.layout;
   let o = '<rect id="phs" class="ph" x="-100" y="0" width="0" height="0" rx="4"/>' + built.frags.join('');
   const SL = layout[startPos.m];
   if (SL && (startPos.m || startPos.t)) {   // start marker: flag above the staff, dashed line through it
@@ -919,7 +935,7 @@ function drawGroup(items, up, L, restY, gs, lastCell) {
   let o = '';
   const top = L.top;
   // feet-voice rests are left out, as on most drum charts, so they never collide with hand notes
-  if (up) for (const r of items) if (r.rest) o += drawRest(r.ticks, L.xOf(r.tick) + 1, restY);
+  if (up) for (const r of items) if (r.rest) { o += drawRest(r.ticks, L.xOf(r.tick) + 1, restY); span(restY - 14, restY + 15); }
   const notes = items.filter(i => !i.rest);
   if (!notes.length) return o;
   notes.forEach(n => {
@@ -938,12 +954,13 @@ function drawGroup(items, up, L, restY, gs, lastCell) {
     const inBeam = doBeam && n.b > 0;
     const ext = n.b > 1 ? (n.b - 1) * 6 : 0;
     n.end = inBeam ? beamY : up ? n.minY - 32 - ext : n.maxY + 32 + ext;
+    span(n.end, n.minY - 7, n.maxY + 7);
     o += `<line class="stem" x1="${r1(n.sx)}" x2="${r1(n.sx)}" y1="${up ? n.maxY : n.minY}" y2="${r1(n.end)}"/>`;
     o += drawHeads(n, up, top);
     if (!inBeam) for (let k = 0; k < n.b; k++) o += flag(n.sx, n.end, k, up);
     let ay = up ? n.end - 9 : n.end + 9;
-    if (n.chord.some(c => c.st === 'a')) { o += `<path class="acc" d="M${r1(n.x-5.5)} ${r1(ay-3.2)}L${r1(n.x+5.5)} ${r1(ay)}L${r1(n.x-5.5)} ${r1(ay+3.2)}"/>`; ay += up ? -9 : 9; }
-    if (n.chord.some(c => c.st === 'o')) { o += `<circle class="open" cx="${r1(n.x)}" cy="${r1(ay)}" r="3"/>`; ay += up ? -9 : 9; }
+    if (n.chord.some(c => c.st === 'a')) { span(ay - 4, ay + 4); o += `<path class="acc" d="M${r1(n.x-5.5)} ${r1(ay-3.2)}L${r1(n.x+5.5)} ${r1(ay)}L${r1(n.x-5.5)} ${r1(ay+3.2)}"/>`; ay += up ? -9 : 9; }
+    if (n.chord.some(c => c.st === 'o')) { span(ay - 4, ay + 4); o += `<circle class="open" cx="${r1(n.x)}" cy="${r1(ay)}" r="3"/>`; ay += up ? -9 : 9; }
     artEdge = up ? Math.min(artEdge, ay) : Math.max(artEdge, ay);
   });
   if (doBeam) {
@@ -970,7 +987,7 @@ function drawGroup(items, up, L, restY, gs, lastCell) {
   // tuplet number only when the rhythm actually uses triplet values
   if (items.some(i => i.ticks === 32 || i.ticks === 16 || i.ticks === 8)) {
     const cx = (L.xOf(gs) + L.xOf(lastCell)) / 2 + (up ? 5 : -5);
-    const y = up ? artEdge + 3 : artEdge + 5;
+    const y = up ? artEdge + 3 : artEdge + 5; span(y - 10, y + 3);
     o += `<text class="tup" x="${r1(cx)}" y="${r1(y)}">${items.some(i => i.ticks === 8) ? 6 : 3}</text>`;
   }
   return o;
@@ -1141,10 +1158,10 @@ grid.addEventListener('pointerover', e => {
 window.addEventListener('pointerup', () => { if (painting) { painting = null; commit(); } });
 // the bar and step under a pointer event on the score
 function scorePos(e) {
-  const svg = $('#score svg'); if (!svg || !geo) return null;
+  const svg = $('#score svg'); if (!svg) return null;
   const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
   const x = (e.clientX - r.left) * vb.width / r.width, y = (e.clientY - r.top) * vb.height / r.height;
-  const mi = layout.findIndex(L => L && y >= L.top - geo.TOP && y < L.top - geo.TOP + geo.SYS && x >= L.mx && x < L.mx + L.mw);
+  const mi = layout.findIndex(L => L && y >= L.y0 && y < L.y1 && x >= L.mx && x < L.mx + L.mw);
   if (mi < 0) return null;
   const L = layout[mi];
   let best = L.m.cells[0];
@@ -1637,7 +1654,7 @@ function placeScorePH(p) {
   const m = L.m, i = m.cells.indexOf(p.t), nx = i >= 0 ? cellEnd(m, i) : p.t + 12;
   const x1 = L.xOf(p.t), w = Math.max(12, (L.xOf(nx) - x1) * 0.92);
   ph.setAttribute('x', r1(x1 - w / 2)); ph.setAttribute('width', r1(w));
-  ph.setAttribute('y', L.top - 64); ph.setAttribute('height', 40 + 64 + 56);
+  ph.setAttribute('y', L.y0 + 2); ph.setAttribute('height', L.y1 - L.y0 - 4);
 }
 function setPlayIcon() {
   const b = $('#playBtn');
@@ -1999,12 +2016,12 @@ const PRINT_ATTR = {
   rq: 'stroke="#000" stroke-width="2.6" fill="none" stroke-linejoin="round" stroke-linecap="round"',
   rst: 'stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round"',
   acc: 'stroke="#000" stroke-width="1.4" fill="none" stroke-linejoin="round" stroke-linecap="round"',
-  ts: 'font-family="helvetica" font-weight="bold" font-size="25" fill="#000" text-anchor="middle"',
+  ts: 'font-family="helvetica" font-style="normal" font-weight="bold" font-size="25" fill="#000" text-anchor="middle"',
   tup: 'font-family="helvetica" font-style="italic" font-weight="bold" font-size="11" fill="#000" text-anchor="middle"',
-  mnum: 'font-family="helvetica" fill="#666"',
-  memo: 'font-family="helvetica" font-style="italic" fill="#000"',
+  mnum: 'font-family="helvetica" font-style="normal" font-weight="normal" fill="#666"',
+  memo: 'font-family="helvetica" font-style="italic" font-weight="normal" fill="#000"',
   rbox: 'fill="#fff" stroke="#000" stroke-width="1.3"',
-  rtxt: 'font-family="helvetica" font-weight="bold" fill="#000"',
+  rtxt: 'font-family="helvetica" font-style="normal" font-weight="bold" fill="#000"',
   rcount: 'font-family="helvetica" font-style="italic" font-weight="bold" fill="#000" text-anchor="end"',
 };
 const printify = frag => frag.replace(/class="(\w+)"/g, (_, c) => PRINT_ATTR[c] || '');
@@ -2033,7 +2050,7 @@ async function buildPDF() {
   const doc = new jsPDF({unit: 'pt', format: 'a4'});
   const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight(), M = 42, CW = PW - 2 * M;
   const LW = 900 / (prefs.zoom / 100);           // the Zoom setting also scales the printed notation
-  const k = CW / LW, {frags, G} = buildScore(LW, true, k), SYS = G.SYS, sysH = SYS * k;
+  const k = CW / LW, {frags, rows} = buildScore(LW, true, k);
   const title = (S.title || '').trim() || 'Untitled groove';
   const um = uniformMeter(S), n = S.measures.length;
   const header = first => {
@@ -2046,7 +2063,8 @@ async function buildPDF() {
       return M + 52;
     }
     doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(90); doc.text(title, M, M);
-    return M - 10;
+    doc.setFont('helvetica', 'normal');   // or the italic carries over into the score's plain text
+    return M + 8;
   };
   let y = header(true);
   const holder = document.createElement('div');
@@ -2054,8 +2072,9 @@ async function buildPDF() {
   document.body.appendChild(holder);
   try {
     for (let li = 0; li < frags.length; li++) {
+      const R = rows[li], sysH = R.h * k;
       if (y + sysH > PH - M - 10) { doc.addPage(); y = header(false); }
-      holder.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${li * SYS} ${r1(LW)} ${SYS}" width="${r1(LW)}" height="${SYS}">${printify(frags[li])}</svg>`;
+      holder.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${R.y0} ${r1(LW)} ${R.h}" width="${r1(LW)}" height="${R.h}">${printify(frags[li])}</svg>`;
       await svg2pdf(holder.firstElementChild, doc, {x: M, y, width: CW, height: sysH});
       y += sysH;
     }
