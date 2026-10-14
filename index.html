@@ -765,7 +765,7 @@ const showTS = mi => mi === 0 || meterOf(S.measures[mi]) !== meterOf(S.measures[
 // however far the score is zoomed out.
 function textSizes(k) {
   const fs = (pt, min, screen) => k ? Math.max(min, pt / k) : screen;
-  return {lab: fs(11.5, 17, 18), memo: fs(10, 15, 15), cnt: fs(10, 15, 15), num: fs(7, 10, 10)};
+  return {lab: fs(11.5, 17, 18), memo: fs(10, 15, 15), num: fs(7, 10, 10)};   // memo: text notes and ×N repeat counts
 }
 // While a line of the score is drawn (staff top line at y = 0), how far its music reaches above and below.
 let SPAN = null;
@@ -856,14 +856,11 @@ function buildScore(LW, print, k) {
     o += `<rect class="ink" x="${x0+9}" y="${top+10}" width="3.6" height="20"/><rect class="ink" x="${x0+16}" y="${top+10}" width="3.6" height="20"/>`;
     o += `<text class="mnum" font-size="${r1(G.num)}" x="${x0}" y="${top - 12}">${ids[0] + 1}</text>` + body;
     span(-12 - G.num * 0.8);
-    // rows stacked above the music, nearest first: repeat counts, text notes, section labels in boxes
+    // rows stacked above the music, nearest first: repeat counts and text notes share one, then section labels in boxes
     let lo = SPAN.lo;
-    if (counts.length) {
-      const y = lo - 3; lo = y - G.cnt * 0.8;
-      for (const c of counts) o += `<text class="rcount" font-size="${r1(G.cnt)}" x="${r1(c.x)}" y="${r1(y)}">${c.s}</text>`;
-    }
-    if (memos.length) {
+    if (counts.length || memos.length) {
       const y = lo - 4 - G.memo * 0.25; lo -= G.memo * 1.2 + 4;
+      for (const c of counts) o += `<text class="rcount" font-size="${r1(G.memo)}" x="${r1(c.x)}" y="${r1(y)}">${c.s}</text>`;
       for (const c of memos) o += `<text class="memo" font-size="${r1(G.memo)}" x="${r1(c.x)}" y="${r1(y)}">${esc(c.s)}</text>`;
     }
     if (labels.length) {
@@ -2055,12 +2052,16 @@ async function buildPDF() {
   const um = uniformMeter(S), n = S.measures.length;
   const header = first => {
     doc.setTextColor(0);
-    if (first) {
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text(title, PW / 2, M + 16, {align: 'center'});
+    if (first) {   // title between the tempo and the bar count on one line; a long title gets a line of its own
+      const tempo = `Tempo: quarter note = ${S.tempo}`, info = `${um || 'Mixed meters'} · ${n} bar${n > 1 ? 's' : ''}`;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-      doc.text(`Tempo: quarter note = ${S.tempo}`, M, M + 42);
-      doc.text(`${um || 'Mixed meters'} · ${n} bar${n > 1 ? 's' : ''}`, PW - M, M + 42, {align: 'right'});
-      return M + 52;
+      const side = Math.max(doc.getTextWidth(tempo), doc.getTextWidth(info));
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+      const oneLine = doc.getTextWidth(title) <= CW - 2 * side - 24, y2 = oneLine ? M + 11 : M + 27;
+      doc.text(title, PW / 2, M + 11, {align: 'center', maxWidth: CW});
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      doc.text(tempo, M, y2); doc.text(info, PW - M, y2, {align: 'right'});
+      return y2 + 9;
     }
     doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(90); doc.text(title, M, M);
     doc.setFont('helvetica', 'normal');   // or the italic carries over into the score's plain text
