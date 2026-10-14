@@ -14,6 +14,8 @@ Open `index.html` in a browser. There is no build step and no server. The one ex
 - **Timing:** each bar has its own time signature (2/4–7/4, 3/8–12/8) and each beat its own subdivision (quarters, 8ths, 16ths, 32nds, triplets, sextuplets). Right-click or Alt-click a step to split it in two or merge it with the next.
 - **Score:** a two-voice drum staff rendered as SVG, with beams, rests, dots, tuplets, accents, ghost notes and open hi-hats.
 - **Song structure:** section labels, repeat signs with a pass count (×2–×16), one-bar "%" repeats, and manual line breaks.
+- **Text notes:** double-click the score to write a short note above that step (a cue, a fill, a reminder); double-click it again to edit it, or empty it to remove it. Notes are saved with the groove and travel in share links.
+- **Print sizes:** in the PDF, section labels, text notes, repeat counts and bar numbers keep a readable size (about 9, 8, 8 and 6 pt) however far the score is zoomed out. The rows above each staff for labels and text notes are only added when the groove uses them.
 - **Editing:** select bars (click a bar title, Shift-click for a range) to copy, cut, paste, duplicate, clear, delete, or wrap them in repeats. Undo and redo work for every edit.
 - **Playback:** synthesized kit, tempo 30–260 with tap tempo, metronome, count-in and loop. Repeats play out in full. Start from any point by clicking the score or a count, or by using the Start menu.
 - **Kit:** the Kit button opens per-drum pitch (±12 semitones), length and volume sliders, with a play button for each drum. It has five synthesized presets (Acoustic, Electronic 808, Jazz, Tight funk, Big rock) and one recorded kit, plus master and metronome volume and a demo beat. The recorded kit is the default on a first visit and its samples load when the page opens. It plays the samples in `samples/virtuosity/` (from Virtuosity Drums, CC0; see `SOURCE.md` there) and falls back to the synthesized sounds if they can't be loaded. The kit is saved in the browser and used for every groove.
@@ -55,7 +57,7 @@ Everything is in `index.html`: the styles at the top, then the markup, then one 
 1. **Model constants:** tick math (quarter = 48 ticks), subdivisions, meters, instruments and their staff positions.
 2. **Bar helpers:** beat groups, steps (`cells`), re-metering, split/merge, repeats and play order.
 3. **Examples**, then **history** (undo/redo).
-4. **Score rendering:** `buildScore()` lays out systems; `renderScore()` draws them on screen.
+4. **Score rendering:** `geometry()` sizes the rows above the staff; `buildScore()` lays out systems; `renderScore()` draws them on screen.
 5. **Grid:** `buildGrid()` and its event handlers, bar selection, copy/paste, and the step context menu.
 6. **Audio:** Web Audio drum synthesis and the sampled kit (`SMAP`, `loadSamples`, `sampleHit`), then the transport and recording (`startRec`, `recHit`) (scheduler, playhead, start marker).
 7. **Controls**, **library**, **share codes and links** (`encode` / `decode` / `sanitize`, `openFromHash`), and **PDF export** (jsPDF + svg2pdf, loaded when first used).

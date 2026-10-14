@@ -88,7 +88,10 @@ kbd{font-family:var(--body);font-size:11.5px;font-weight:600;border:1px solid va
 .readout span{font-size:12px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
 .fromfld{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
 .fromfld select{height:34px;max-width:170px;border:1px solid var(--line-2);border-radius:7px;background:var(--paper);padding:0 6px;font-size:14px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink)}
-#score svg{cursor:pointer}
+#score svg{cursor:pointer;user-select:none;-webkit-user-select:none}
+.memo-pop{position:fixed;z-index:60;background:var(--paper);border:1px solid var(--accent);border-radius:9px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px 8px;display:flex;flex-direction:column;gap:3px}
+.memo-pop input{width:230px;max-width:70vw;border:none;background:transparent;font-size:15px;font-style:italic;outline:none}
+.memo-pop small{font-size:11.5px;color:var(--ink-3)}
 .smk{stroke:var(--accent);stroke-width:1.6;stroke-dasharray:4 3}
 .smkf{fill:var(--accent)}
 .cnt span{cursor:pointer}
@@ -136,7 +139,8 @@ kbd{font-family:var(--body);font-size:11.5px;font-weight:600;border:1px solid va
 .acc{stroke:var(--ink);stroke-width:1.4;fill:none;stroke-linejoin:round;stroke-linecap:round}
 .ts{font-family:var(--display);font-weight:700;font-size:25px;fill:var(--ink);text-anchor:middle;dominant-baseline:central}
 .tup{font-family:var(--body);font-style:italic;font-weight:600;font-size:11px;fill:var(--ink);text-anchor:middle}
-.mnum{font-family:var(--body);font-size:10px;fill:var(--ink-3)}
+.mnum{font-family:var(--body);fill:var(--ink-3)}
+.memo{font-family:var(--body);font-style:italic;font-weight:500;fill:var(--ink)}
 .ph{fill:var(--ph)}
 
 /* grid */
@@ -229,8 +233,8 @@ kbd{font-family:var(--body);font-size:11.5px;font-weight:600;border:1px solid va
 .selbar .btn{height:30px}
 #clipInfo{margin-left:auto;font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
 .rbox{fill:var(--paper);stroke:var(--ink);stroke-width:1.3}
-.rtxt{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.03em;fill:var(--ink)}
-.rcount{font-family:var(--body);font-weight:600;font-style:italic;font-size:13px;fill:var(--ink);text-anchor:end}
+.rtxt{font-family:var(--display);font-weight:700;letter-spacing:.03em;fill:var(--ink)}
+.rcount{font-family:var(--body);font-weight:600;font-style:italic;fill:var(--ink);text-anchor:end}
 .foot{color:var(--ink-3);font-size:13px;display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;padding-inline:2px}
 
 /* dialogs */
@@ -390,7 +394,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
         <span class="lg fam-drum"><span class="cell" data-s="g"></span>Ghost (snare)</span>
         <span class="lg fam-drum"><span class="cell" data-s="c"></span>Cross-stick (snare)</span>
         <span class="lg fam-cym"><span class="cell" data-s="o"></span>Open (hi-hat)</span>
-        <span>Drag to paint. Right-click or Alt-click a step to split it (e.g. a 16th into two 32nds) or merge it. Click a bar title to select bars for copy and paste; Shift-click selects a range. Click a count (1 e &amp; a) or the score to start playback there. The ↵ button in a bar's header starts a new score line after it.</span>
+        <span>Drag to paint. Right-click or Alt-click a step to split it (e.g. a 16th into two 32nds) or merge it. Click a bar title to select bars for copy and paste; Shift-click selects a range. Click a count (1 e &amp; a) or the score to start playback there. Double-click the score to write a text note at that spot. The ↵ button in a bar's header starts a new score line after it.</span>
       </div>
     </div>
     <div class="selbar" id="selBar" hidden>
@@ -472,6 +476,7 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
         <li>Type a <b>section name</b> (Verse, Chorus…) under a bar title to label it on the score.</li>
         <li>The <b>repeat</b> buttons start and end a repeat, with a play count up to ×16. <b>%</b> makes a bar repeat the one before.</li>
         <li>The <b>↵</b> button starts a new score line after that bar.</li>
+        <li><b>Double-click the score</b> to write a text note above that spot (a fill, a cue, a reminder). Double-click it again to edit or remove it.</li>
       </ul></section>
       <section><h4>6 · Copy and paste bars</h4><ul>
         <li>Click a <b>bar title</b> to select it; Shift-click selects a range.</li>
@@ -529,6 +534,11 @@ textarea.code{width:100%;min-height:84px;resize:vertical;border:1px solid var(--
   <button role="menuitem" data-c="clear">Clear this note</button>
 </div>
 
+<div class="memo-pop" id="memoPop" hidden>
+  <input id="memoIn" maxlength="60" placeholder="Write a note…" aria-label="Text note above the score" spellcheck="false">
+  <small>Enter to save · leave empty to remove</small>
+</div>
+
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -562,7 +572,7 @@ const BYID = Object.fromEntries(INSTR.map(i => [i.id, i]));
 // duration in ticks -> beams / dot
 const VINFO = {72:{b:0,dot:1},48:{b:0},36:{b:1,dot:1},32:{b:0},24:{b:1},18:{b:2,dot:1},16:{b:1},12:{b:2},8:{b:2},6:{b:3}};
 const STEP_NAME = {36:'dotted 8ths',24:'8ths',18:'dotted 16ths',16:'triplet 8ths',12:'16ths',8:'sextuplet 16ths',6:'32nds'};
-const TOP = 96, BOT = 66, SYS = TOP + 40 + BOT;
+const BOT = 58;   // room below the staff, for the feet voice
 const SECTIONS = ['Intro','Verse','Pre-chorus','Chorus','Bridge','Solo','Breakdown','Build','Fill','Outro'];
 
 // {title, tempo, measures:[{num, den, cells:[tick...], notes:{id:{tick:state}},
@@ -752,9 +762,23 @@ function setNote(mi, id, t, v) {
 let layout = [];
 const scoreW = w => 10 + w * 0.5;          // horizontal room a step gets on the staff
 const showTS = mi => mi === 0 || meterOf(S.measures[mi]) !== meterOf(S.measures[mi - 1]);
+// Room above the staff: the music itself, then a row for text notes and a row for section labels, each only when the
+// groove has any. k is PDF points per score unit (0 on screen): printed text keeps a readable size however far the
+// score is zoomed out. Offsets are relative to the staff's top line.
+function geometry(k) {
+  const fs = (pt, min, screen) => k ? Math.max(min, pt / k) : screen;
+  const G = {lab: fs(9, 15, 17), memo: fs(8, 13, 14), cnt: fs(8, 13, 14), num: fs(6, 10, 10)};
+  let top = Math.max(70, 60 + G.cnt * 0.8) + 2;           // stems, beams, accents and the ×N repeat count
+  if (S.measures.some(m => m.memo && Object.keys(m.memo).length)) { G.memoY = -(top + 3 + G.memo * 0.25); top += G.memo * 1.2 + 3; }
+  if (S.measures.some(m => m.label)) { G.labH = G.lab * 1.45; G.labY = -(top + 4 + G.labH); top += G.labH + 4; }
+  G.TOP = Math.ceil(top + 3); G.SYS = G.TOP + 40 + BOT;
+  return G;
+}
+let geo = null;   // geometry of the score as drawn on screen
 // Lays the score out at logical width LW. Returns one SVG fragment per system (line) plus the bar layout.
-// print: the PDF export, where the time-signature numerals cannot rely on CSS baselines.
-function buildScore(LW, print) {
+// print: the PDF export, where the time-signature numerals cannot rely on CSS baselines; k as in geometry().
+function buildScore(LW, print, k) {
+  const G = geometry(print ? k : 0), TOP = G.TOP, SYS = G.SYS;
   const CLEF = 30, PADL = 14, PADR = 8, avail = LW - 8 - CLEF, n = S.measures.length;
   const mins = S.measures.map((m, mi) => {
     const ts = showTS(mi) ? 26 : 0, rs = m.rs ? 16 : 0, re = m.re ? 14 : 0; let w = 0;
@@ -812,8 +836,8 @@ function buildScore(LW, print) {
         body += `<rect class="ink" x="${r1(rx)}" y="${top}" width="4" height="40"/><line class="bl" x1="${r1(rx+7)}" x2="${r1(rx+7)}" y1="${top}" y2="${top+40}"/><circle class="ink" cx="${r1(rx+11.5)}" cy="${top+15}" r="2"/><circle class="ink" cx="${r1(rx+11.5)}" cy="${top+25}" r="2"/>`;
       }
       if (m.label) {   // section mark in a box above the bar
-        const bw = m.label.length * 7.6 + 14, lx = mx + (mm.ts ? 2 : 4);
-        body += `<rect class="rbox" x="${r1(lx)}" y="${top - 92}" width="${r1(bw)}" height="20" rx="3"/><text class="rtxt" x="${r1(lx + 7)}" y="${top - 77}">${esc(m.label)}</text>`;
+        const bw = m.label.length * G.lab * (print ? 0.6 : 0.545) + G.lab, lx = mx + (mm.ts ? 2 : 4);
+        body += `<rect class="rbox" x="${r1(lx)}" y="${r1(top + G.labY)}" width="${r1(bw)}" height="${r1(G.labH)}" rx="3"/><text class="rtxt" font-size="${r1(G.lab)}" x="${r1(lx + G.lab * 0.5)}" y="${r1(top + G.labY + G.labH * 0.72)}">${esc(m.label)}</text>`;
       }
       if (m.sim) {    // one-bar repeat sign
         const cx = x1 + mm.notes * k / 2;
@@ -825,23 +849,24 @@ function buildScore(LW, print) {
       const bx = mx + mw;
       if (m.re) {     // end repeat: dots, thin, thick, and how many times to play
         body += `<circle class="ink" cx="${r1(bx-12.5)}" cy="${top+15}" r="2"/><circle class="ink" cx="${r1(bx-12.5)}" cy="${top+25}" r="2"/><line class="bl" x1="${r1(bx-7)}" x2="${r1(bx-7)}" y1="${top}" y2="${top+40}"/><rect class="ink" x="${r1(bx-4)}" y="${top}" width="4" height="40"/>`;
-        body += `<text class="rcount" x="${r1(bx)}" y="${top - 60}">×${m.re}</text>`;
+        body += `<text class="rcount" font-size="${r1(G.cnt)}" x="${r1(bx)}" y="${top - 60}">×${m.re}</text>`;
       } else if (mi === n - 1) body += `<line class="bl" x1="${r1(bx-7)}" x2="${r1(bx-7)}" y1="${top}" y2="${top+40}"/><rect class="ink" x="${r1(bx-4)}" y="${top}" width="4" height="40"/>`;
       else body += `<line class="bl" x1="${r1(bx)}" x2="${r1(bx)}" y1="${top}" y2="${top+40}"/>`;
+      for (const t in m.memo || {}) body += `<text class="memo" font-size="${r1(G.memo)}" x="${r1(xOf(+t) - 5)}" y="${r1(top + G.memoY)}">${esc(m.memo[t])}</text>`;
       mx += mw;
     });
     for (let q = 0; q < 5; q++) o += `<line class="sl" x1="${x0}" x2="${r1(mx)}" y1="${top + q*10}" y2="${top + q*10}"/>`;
     o += `<rect class="ink" x="${x0+9}" y="${top+10}" width="3.6" height="20"/><rect class="ink" x="${x0+16}" y="${top+10}" width="3.6" height="20"/>`;
-    o += `<text class="mnum" x="${x0}" y="${top - 12}">${ids[0] + 1}</text>` + body;
+    o += `<text class="mnum" font-size="${r1(G.num)}" x="${x0}" y="${top - 12}">${ids[0] + 1}</text>` + body;
     frags.push(o);
   });
-  return {frags, H, layout};
+  return {frags, H, layout, G};
 }
 function renderScore() {
   const host = $('#score'); if (host.offsetParent === null) return;
   const W = host.clientWidth || 800, z = prefs.zoom / 100, LW = W / z, n = S.measures.length;
   const built = buildScore(LW, false), H = built.H;
-  layout = built.layout;
+  layout = built.layout; geo = built.G;
   let o = '<rect id="phs" class="ph" x="-100" y="0" width="0" height="0" rx="4"/>' + built.frags.join('');
   const SL = layout[startPos.m];
   if (SL && (startPos.m || startPos.t)) {   // start marker: flag above the staff, dashed line through it
@@ -1114,18 +1139,49 @@ grid.addEventListener('pointerover', e => {
   if (c) { const v = fitState(c.dataset.i, painting.v); if (c.dataset.s !== v) applyCell(c, v); }
 });
 window.addEventListener('pointerup', () => { if (painting) { painting = null; commit(); } });
-// click the score to move the start marker (or jump there while playing)
-$('#score').addEventListener('click', e => {
-  const svg = $('#score svg'); if (!svg) return;
+// the bar and step under a pointer event on the score
+function scorePos(e) {
+  const svg = $('#score svg'); if (!svg || !geo) return null;
   const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
   const x = (e.clientX - r.left) * vb.width / r.width, y = (e.clientY - r.top) * vb.height / r.height;
-  const mi = layout.findIndex(L => L && y >= L.top - TOP && y < L.top - TOP + SYS && x >= L.mx && x < L.mx + L.mw);
-  if (mi < 0) return;
+  const mi = layout.findIndex(L => L && y >= L.top - geo.TOP && y < L.top - geo.TOP + geo.SYS && x >= L.mx && x < L.mx + L.mw);
+  if (mi < 0) return null;
   const L = layout[mi];
   let best = L.m.cells[0];
   for (const t of L.m.cells) if (Math.abs(L.xOf(t) - x) < Math.abs(L.xOf(best) - x)) best = t;
-  setStart({m: mi, t: x < L.xOf(L.m.cells[0]) ? 0 : best});
+  return {m: mi, t: x < L.xOf(L.m.cells[0]) ? 0 : best};
+}
+// click the score to move the start marker (or jump there while playing)
+$('#score').addEventListener('click', e => { const p = scorePos(e); if (p) setStart(p); });
+// double-click it to write a text note above that step, or to edit or remove the one already there
+let memoAt = null;
+$('#score').addEventListener('dblclick', e => {
+  const p = scorePos(e); if (!p) return;
+  e.preventDefault();
+  memoAt = p;
+  const pop = $('#memoPop'), inp = $('#memoIn');
+  inp.value = (S.measures[p.m].memo || {})[p.t] || '';
+  pop.hidden = false;
+  const r = pop.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(e.clientX - 24, innerWidth - r.width - 8)) + 'px';
+  pop.style.top = Math.max(8, e.clientY - r.height - 12) + 'px';
+  inp.focus(); inp.select();
 });
+function closeMemo(save) {
+  const pop = $('#memoPop'); if (pop.hidden || !memoAt) return;
+  const p = memoAt, m = S.measures[p.m]; memoAt = null; pop.hidden = true;
+  if (!save || !m) return;
+  const v = $('#memoIn').value.trim().slice(0, 60), old = (m.memo || {})[p.t] || '';
+  if (v === old) return;
+  snapshot(); m.memo = m.memo || {};
+  if (v) m.memo[p.t] = v; else delete m.memo[p.t];
+  commit();
+}
+$('#memoIn').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); closeMemo(true); }
+  if (e.key === 'Escape') { e.stopPropagation(); closeMemo(false); }
+});
+$('#memoIn').addEventListener('blur', () => closeMemo(true));
 grid.addEventListener('click', e => {
   const cs = e.target.closest('.cnt span');
   if (cs) { setStart({m: +cs.dataset.m, t: +cs.dataset.t}); return; }
@@ -1139,8 +1195,8 @@ grid.addEventListener('click', e => {
   if (act === 'sel') { selectBar(mi, e.shiftKey); return; }
   if (act === 'pasteEnd') { pasteAt(S.measures.length, false); return; }
   snapshot();
-  if (act === 'add') { const last = S.measures[S.measures.length - 1]; S.measures.push({num: last.num, den: last.den, cells: [...last.cells], notes: {}, label: '', rs: false, re: 0, sim: false, br: false}); }
-  if (act === 'dup') S.measures.splice(mi + 1, 0, Object.assign(clone(m), {label: '', rs: false, re: 0, br: false}));
+  if (act === 'add') { const last = S.measures[S.measures.length - 1]; S.measures.push({num: last.num, den: last.den, cells: [...last.cells], notes: {}, memo: {}, label: '', rs: false, re: 0, sim: false, br: false}); }
+  if (act === 'dup') S.measures.splice(mi + 1, 0, Object.assign(clone(m), {label: '', memo: {}, rs: false, re: 0, br: false}));
   if (act === 'clr') { m.notes = {}; m.sim = false; }
   if (act === 'del' && S.measures.length > 1) { S.measures.splice(mi, 1); fixSel(); fixCursor(); }
   if (act === 'rs') m.rs = !m.rs;
@@ -1838,7 +1894,7 @@ const b64e = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').repl
 function b64d(s) { let b = s.replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '='; return decodeURIComponent(escape(atob(b))); }
 function encode(g) {
   return 'GS2.' + b64e(JSON.stringify({t: g.title, b: g.tempo, d: g.measures.map(m => {
-    const x = {}; if (m.label) x.l = m.label; if (m.rs) x.rs = 1; if (m.re) x.re = m.re; if (m.sim) x.sim = 1; if (m.br) x.br = 1;
+    const x = {}; if (m.label) x.l = m.label; if (m.rs) x.rs = 1; if (m.re) x.re = m.re; if (m.sim) x.sim = 1; if (m.br) x.br = 1; if (m.memo && Object.keys(m.memo).length) x.m = m.memo;
     return Object.keys(x).length ? [meterOf(m), m.cells, m.notes, x] : [meterOf(m), m.cells, m.notes];
   })}));
 }
@@ -1848,7 +1904,7 @@ function decode(code) {
     const o = JSON.parse(b64d(code.slice(4)));
     return sanitize({title: o.t, tempo: o.b, measures: (o.d || []).map(([mt, cells, notes, x = {}]) => {
       const [num, den] = String(mt).split('/').map(Number);
-      return {num, den, cells, notes, label: x.l, rs: x.rs, re: x.re, sim: x.sim, br: x.br};
+      return {num, den, cells, notes, label: x.l, rs: x.rs, re: x.re, sim: x.sim, br: x.br, memo: x.m};
     })});
   }
   if (code.startsWith('GS1.')) {   // codes from the first version: one meter and grid for the whole groove
@@ -1877,9 +1933,13 @@ function sanitize(g) {
       for (const t in src[id]) { const v = src[id][t]; if (set.has(+t) && BYID[id].states.includes(v)) (notes[id] || (notes[id] = {}))[+t] = v; }
     }
     const x = modern ? raw : {};
-    const re = Math.round(+x.re || 0);
+    const re = Math.round(+x.re || 0), memo = {};
+    for (const t of Object.keys(x.memo || {}).slice(0, 16)) {   // text notes, keyed by tick
+      const v = String(x.memo[t] || '').trim().slice(0, 60);
+      if (v && Number.isInteger(+t) && +t >= 0 && +t < T) memo[+t] = v;
+    }
     out.measures.push({num, den, cells, notes,
-      label: String(x.label || '').slice(0, 40), rs: !!x.rs, re: re >= 2 ? Math.min(re, 16) : 0, sim: !!x.sim && out.measures.length > 0, br: !!x.br});
+      label: String(x.label || '').slice(0, 40), memo, rs: !!x.rs, re: re >= 2 ? Math.min(re, 16) : 0, sim: !!x.sim && out.measures.length > 0, br: !!x.br});
   }
   if (!out.measures.length) out.measures.push(newMeasure(4, 4, '16'));
   return out;
@@ -1941,10 +2001,11 @@ const PRINT_ATTR = {
   acc: 'stroke="#000" stroke-width="1.4" fill="none" stroke-linejoin="round" stroke-linecap="round"',
   ts: 'font-family="helvetica" font-weight="bold" font-size="25" fill="#000" text-anchor="middle"',
   tup: 'font-family="helvetica" font-style="italic" font-weight="bold" font-size="11" fill="#000" text-anchor="middle"',
-  mnum: 'font-family="helvetica" font-size="10" fill="#666"',
+  mnum: 'font-family="helvetica" fill="#666"',
+  memo: 'font-family="helvetica" font-style="italic" fill="#000"',
   rbox: 'fill="#fff" stroke="#000" stroke-width="1.3"',
-  rtxt: 'font-family="helvetica" font-weight="bold" font-size="12.5" fill="#000"',
-  rcount: 'font-family="helvetica" font-style="italic" font-weight="bold" font-size="13" fill="#000" text-anchor="end"',
+  rtxt: 'font-family="helvetica" font-weight="bold" fill="#000"',
+  rcount: 'font-family="helvetica" font-style="italic" font-weight="bold" fill="#000" text-anchor="end"',
 };
 const printify = frag => frag.replace(/class="(\w+)"/g, (_, c) => PRINT_ATTR[c] || '');
 const LIBS = {
@@ -1972,8 +2033,7 @@ async function buildPDF() {
   const doc = new jsPDF({unit: 'pt', format: 'a4'});
   const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight(), M = 42, CW = PW - 2 * M;
   const LW = 900 / (prefs.zoom / 100);           // the Zoom setting also scales the printed notation
-  const {frags} = buildScore(LW, true);
-  const k = CW / LW, sysH = SYS * k;
+  const k = CW / LW, {frags, G} = buildScore(LW, true, k), SYS = G.SYS, sysH = SYS * k;
   const title = (S.title || '').trim() || 'Untitled groove';
   const um = uniformMeter(S), n = S.measures.length;
   const header = first => {
